@@ -1,0 +1,1 @@
+web: bash AI_Tutor/backend/start.sh

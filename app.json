@@ -1,0 +1,31 @@
+{
+  "name": "AI-Python-Tutor",
+  "description": "Tuteur IA pour apprendre Python du débutant à l'expert",
+  "repository": "https://github.com/yourusername/LLM_AI_Tutor",
+  "keywords": ["python", "ai", "tutor", "gpt", "education"],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "OPENAI_API_KEY": {
+      "description": "Votre clé API OpenAI",
+      "required": true,
+      "sensitive": true
+    },
+    "DATABASE_URL": {
+      "description": "URL de la base de données PostgreSQL",
+      "required": true,
+      "sensitive": true
+    },
+    "FLASK_ENV": {
+      "description": "Environnement Flask",
+      "value": "production",
+      "required": true
+    }
+  }
+}
