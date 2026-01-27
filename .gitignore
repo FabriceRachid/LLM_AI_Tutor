@@ -47,3 +47,6 @@ env/
 
 # Render
 *.log
+
+.env
+.env.*
