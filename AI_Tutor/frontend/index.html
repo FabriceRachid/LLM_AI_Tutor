@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutor - Votre Assistant d'Apprentissage Intelligent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="grid-overlay"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-icon" id="toastIcon"></div>
+        <div class="toast-message" id="toastMessage"></div>
+    </div>
+
+    <!-- User Creation Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🎓 Bienvenue sur AI Tutor</h2>
+            </div>
+            <div style="padding: 2rem;">
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Créez votre compte pour commencer</p>
+                
+                <input type="text" id="usernameInput" class="input-field" 
+                       placeholder="Votre nom d'utilisateur" style="width: 100%; margin-bottom: 1rem;">
+                
+                <input type="email" id="emailInput" class="input-field" 
+                       placeholder="Votre email" style="width: 100%; margin-bottom: 2rem;">
+                
+                <button id="createUserBtn" class="btn btn-primary" style="width: 100%;">
+                    Créer mon compte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Session Modal -->
+    <div id="newSessionModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📝 Nouvelle Session</h2>
+                <button class="close-modal" onclick="document.getElementById('newSessionModal').classList.remove('show')">✕</button>
+            </div>
+            <div style="padding: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Sujet d'étude</label>
+                <input type="text" id="topicInput" class="input-field" 
+                       placeholder="Ex: Les listes en Python, Programmation Orientée Objet..." 
+                       style="width: 100%; margin-bottom: 2rem;">
+                
+                <button id="createSessionBtn" class="btn btn-primary" style="width: 100%;">
+                    Créer la session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Level Modal -->
+    <div id="changeLevelModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🎯 Changer votre niveau</h2>
+                <button class="close-modal" onclick="document.getElementById('changeLevelModal').classList.remove('show')">✕</button>
+            </div>
+            <div style="padding: 2rem;">
+                <p style="margin-bottom: 2rem; color: var(--text-secondary);">Sélectionnez votre niveau de compétence</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <button class="level-option" data-level="beginner" 
+                            style="padding: 1.5rem; text-align: left; border: 2px solid var(--electric-blue); border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.3s;">
+                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">🌱 Débutant</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted);">Je commence tout juste à apprendre</div>
+                    </button>
+                    
+                    <button class="level-option" data-level="intermediate" 
+                            style="padding: 1.5rem; text-align: left; border: 2px solid var(--electric-blue); border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.3s;">
+                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">📈 Intermédiaire</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted);">J'ai des connaissances solides</div>
+                    </button>
+                    
+                    <button class="level-option" data-level="expert" 
+                            style="padding: 1.5rem; text-align: left; border: 2px solid var(--electric-blue); border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.3s;">
+                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">⭐ Expert</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted);">Je maîtrise Python en profondeur</div>
+                    </button>
+                </div>
+                
+                <style>
+                    .level-option:hover {
+                        background: rgba(0, 212, 255, 0.1) !important;
+                        border-color: var(--accent-cyan) !important;
+                    }
+                </style>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Modal -->
+    <div id="exerciseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">💪 Exercice de Pratique</h2>
+                <button class="close-modal" onclick="closeExerciseModal()">✕</button>
+            </div>
+            <div class="exercise-text" id="exerciseText"></div>
+            <textarea class="code-editor" id="codeEditor" placeholder="Écrivez votre code Python ici..."></textarea>
+            <div style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem;">
+                <button class="btn btn-primary" style="flex: 1;" onclick="submitExercise()">
+                    ✅ Soumettre la solution
+                </button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="closeExerciseModal()">
+                    ✕ Fermer
+                </button>
+            </div>
+            <div id="correctionResult" style="padding: 0 1.5rem 1.5rem;"></div>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo" onclick="location.reload()">
+                    <div class="logo-icon">🤖</div>
+                    <div class="logo-text">
+                        <div class="logo-name">AI TUTOR</div>
+                        <div class="logo-tagline">LEARN PYTHON</div>
+                    </div>
+                </div>
+                <div class="header-user">
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Utilisateur</div>
+                        <div class="user-level" id="userLevel">Niveau: Débutant</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="logout()" style="padding: 0.5rem 1rem;">
+                        Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-layout">
+            <!-- Sessions Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-title">📚 MES SESSIONS</div>
+                <button class="btn btn-primary" id="newSessionBtn" style="width: 100%; margin-bottom: 1rem;">
+                    + Nouvelle Session
+                </button>
+                <div id="sessionsList"></div>
+            </aside>
+
+            <!-- Chat Area -->
+            <main class="chat-area">
+                <div class="chat-header">
+                    <div class="current-topic" id="currentTopic">Bienvenue</div>
+                    <div class="level-badge" id="levelBadge">DÉBUTANT</div>
+                </div>
+                
+                <div class="messages-container" id="messagesContainer">
+                    <div class="welcome-message">
+                        <div class="welcome-title">🎓 Bienvenue sur AI Tutor</div>
+                        <div class="welcome-subtitle">Créez une nouvelle session pour commencer</div>
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <div class="input-wrapper">
+                        <textarea class="input-field" id="messageInput" 
+                                  placeholder="Posez votre question..."></textarea>
+                        <div class="input-actions">
+                            <button class="send-btn" id="sendBtn">📤</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Stats Panel -->
+            <aside class="stats-panel">
+                <div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalExercises">0</div>
+                        <div class="stat-label">Exercices résolus</div>
+                    </div>
+                    
+                    <div class="stat-item" style="margin-top: 2rem;">
+                        <div class="stat-value" id="successRate">0%</div>
+                        <div class="stat-label">Taux de réussite</div>
+                    </div>
+                    
+                    <div class="stat-item" style="margin-top: 2rem;">
+                        <div class="stat-value" id="streak">0</div>
+                        <div class="stat-label">Série actuelle</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button class="btn btn-primary" id="exerciseBtn" style="width: 100%;">
+                        💪 Exercice
+                    </button>
+                    <button class="btn btn-secondary" id="changeLevelBtn" style="width: 100%;">
+                        🎯 Changer niveau
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

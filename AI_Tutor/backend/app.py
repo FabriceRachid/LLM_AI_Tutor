@@ -1,7 +1,11 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import sys
 from pathlib import Path
+import os
+import sys
+import logging
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
 # Ajouter le répertoire parent pour les imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,10 +18,16 @@ except ImportError:
     from .models import db, User, Session, Message, Exercise
 
 from datetime import datetime
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
@@ -30,23 +40,37 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JSON_SORT_KEYS"] = False
 
 # Configuration CORS
+if os.getenv("FLASK_ENV") == "production":
+    # Production: Allow only specific origins
+    allowed_origins = [
+        "https://your-app.onrender.com",
+        "https://your-domain.com"
+    ]
+else:
+    # Development: Allow all origins
+    allowed_origins = ["*"]
+
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["*"],
+        "origins": allowed_origins,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
     }
 })
 
 db.init_app(app)
+
+with app.app_context():
+    db.create_all()
 
 
 # ============= FRONTEND ROUTES =============
 
 @app.route('/')
 def index():
-    """Servir la page d'accueil"""
-    return send_from_directory(app.static_folder, 'index.html')
+    """Servir la page de connexion par défaut"""
+    return send_from_directory(app.static_folder, 'login.html')
 
 
 @app.route('/<path:path>')
@@ -59,13 +83,32 @@ def serve_static(path):
 
 # ============= ERROR HANDLERS =============
 
+@app.errorhandler(404)
+def not_found(error):
+    """Gérer les routes non trouvées"""
+    return jsonify({"error": "Route non trouvée"}), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Gérer les erreurs internes"""
+    db.session.rollback()
+    print(f"Erreur serveur: {str(error)}")
+    return jsonify({"error": "Erreur serveur interne"}), 500
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    """Gérer les mauvaises requêtes"""
+    return jsonify({"error": "Mauvaise requête"}), 400
+
+
 # ============= HEALTH CHECK =============
 
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check pour Render"""
     try:
-        # Vérifier la base de données
         User.query.first()
         return jsonify({
             "status": "healthy",
@@ -79,42 +122,42 @@ def health_check():
         }), 503
 
 
-@app.errorhandler(404)
-def not_found(error):
-    """Gérer les routes non trouvées"""
-    return jsonify({"error": "Route non trouvée"}), 404
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    """Gérer les erreurs internes"""
-    db.session.rollback()
-    return jsonify({"error": "Erreur serveur interne"}), 500
-
-
-@app.errorhandler(400)
-def bad_request(error):
-    """Gérer les mauvaises requêtes"""
-    return jsonify({"error": "Mauvaise requête"}), 400
-
-
 # ============= ROUTES UTILISATEUR =============
+
+def validate_email(email):
+    """Validate email format"""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
 
 @app.route("/api/users", methods=["POST"])
 def create_user():
     """Créer un nouvel utilisateur"""
     try:
         data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Données de requête manquantes"}), 400
+            
         username = data.get("username", "").strip()
         email = data.get("email", "").strip()
         
         if not username or not email:
             return jsonify({"error": "Username et email requis"}), 400
         
-        if User.query.filter_by(username=username).first():
-            return jsonify({"error": "Utilisateur déjà existant"}), 400
+        if len(username) < 3 or len(username) > 50:
+            return jsonify({"error": "Le nom d'utilisateur doit contenir entre 3 et 50 caractères"}), 400
+            
+        if not validate_email(email):
+            return jsonify({"error": "Format d'email invalide"}), 400
         
-        user = User(username=username, email=email, current_level="beginner")
+        if User.query.filter_by(username=username).first():
+            return jsonify({"error": "Nom d'utilisateur déjà utilisé"}), 400
+            
+        if User.query.filter_by(email=email).first():
+            return jsonify({"error": "Email déjà utilisé"}), 400
+        
+        user = User(username=username, email=email, current_level="beginner", password_hash=generate_password_hash("password123"))
         db.session.add(user)
         db.session.commit()
         
@@ -122,6 +165,113 @@ def create_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+# (Ajouter cette route après create_user)
+
+@app.route("/api/users", methods=["GET"])
+def search_users():
+    """Rechercher un utilisateur par username et email"""
+    username = request.args.get("username", "").strip()
+    email = request.args.get("email", "").strip()
+    
+    if not username or not email:
+        return jsonify({"error": "Username et email requis"}), 400
+    
+    user = User.query.filter_by(username=username, email=email).first()
+    
+    if not user:
+        return jsonify({"error": "Utilisateur non trouvé"}), 404
+    
+    return jsonify(user.to_dict())
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    """Route de connexion"""
+    try:
+        data = request.get_json()
+        username = data.get("username", "").strip()
+        password = data.get("password", "")
+        
+        if not username or not password:
+            return jsonify({"error": "Username et mot de passe requis"}), 400
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if not user or not check_password_hash(user.password_hash, password):
+            return jsonify({"error": "Identifiants invalides"}), 401
+        
+        # Créer une session
+        session = Session(user_id=user.id, topic="Session de connexion")
+        db.session.add(session)
+        db.session.commit()
+        
+        return jsonify({
+            "session_id": session.id,
+            "user_id": user.id,
+            "username": user.username
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Erreur de connexion"}), 500
+
+
+@app.route("/register", methods=["POST"])
+def register():
+    """Route d'inscription"""
+    try:
+        data = request.get_json()
+        username = data.get("username", "").strip()
+        email = data.get("email", "").strip()
+        password = data.get("password", "")
+        
+        if not username or not email or not password:
+            return jsonify({"error": "Username, email et mot de passe requis"}), 400
+        
+        if len(username) < 3 or len(username) > 50:
+            return jsonify({"error": "Le nom d'utilisateur doit contenir entre 3 et 50 caractères"}), 400
+        
+        if len(password) < 6:
+            return jsonify({"error": "Le mot de passe doit contenir au moins 6 caractères"}), 400
+        
+        if not validate_email(email):
+            return jsonify({"error": "Format d'email invalide"}), 400
+        
+        if User.query.filter_by(username=username).first():
+            return jsonify({"error": "Nom d'utilisateur déjà utilisé"}), 400
+        
+        if User.query.filter_by(email=email).first():
+            return jsonify({"error": "Email déjà utilisé"}), 400
+        
+        # Hasher le mot de passe
+        password_hash = generate_password_hash(password)
+        
+        user = User(
+            username=username,
+            email=email,
+            password_hash=password_hash,
+            current_level="beginner"
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Créer une session
+        user_session = Session(user_id=user.id, topic="Session d'inscription")
+        db.session.add(user_session)
+        db.session.commit()
+        
+        return jsonify({
+            "session_id": user_session.id,
+            "user_id": user.id,
+            "username": user.username
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erreur d'inscription: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return jsonify({"error": f"Erreur d'inscription: {str(e)}"}), 500
 
 
 @app.route("/api/users/<int:user_id>", methods=["GET"])
@@ -147,6 +297,37 @@ def update_user_level(user_id):
     return jsonify(user.to_dict())
 
 
+@app.route("/api/users/<int:user_id>/sessions", methods=["GET"])
+def get_user_sessions(user_id):
+    """Récupérer toutes les sessions d'un utilisateur"""
+    user = User.query.get_or_404(user_id)
+    sessions = Session.query.filter_by(user_id=user_id).order_by(Session.updated_at.desc()).all()
+    
+    return jsonify({
+        "user": user.to_dict(),
+        "sessions": [s.to_dict() for s in sessions]
+    })
+
+
+@app.route("/api/users/<int:user_id>/exercises", methods=["GET"])
+def get_user_exercises(user_id):
+    """Récupérer les exercices d'un utilisateur"""
+    user = User.query.get_or_404(user_id)
+    exercises = Exercise.query.filter_by(user_id=user_id).order_by(Exercise.created_at.desc()).all()
+    
+    correct_count = sum(1 for e in exercises if e.is_correct)
+    total_count = len(exercises)
+    success_rate = (correct_count / total_count * 100) if total_count > 0 else 0
+    
+    return jsonify({
+        "user": user.to_dict(),
+        "exercises": [e.to_dict() for e in exercises],
+        "total_exercises": total_count,
+        "exercises_correct": correct_count,
+        "success_rate": success_rate
+    })
+
+
 # ============= ROUTES CHAT/SESSION =============
 
 @app.route("/api/sessions", methods=["POST"])
@@ -165,45 +346,6 @@ def create_session():
     return jsonify(session.to_dict()), 201
 
 
-@app.route("/api/sessions/<int:session_id>/messages", methods=["POST"])
-def chat(session_id):
-    """Envoyer un message dans une session"""
-    session = Session.query.get_or_404(session_id)
-    user = session.user
-    data = request.get_json()
-    user_message = data.get("message", "").strip()
-    
-    if not user_message:
-        return jsonify({"error": "Message vide"}), 400
-    
-    # Sauvegarder le message de l'utilisateur
-    user_msg = Message(
-        session_id=session_id,
-        role="user",
-        content=user_message
-    )
-    db.session.add(user_msg)
-    db.session.commit()
-    
-    # Générer la réponse du tuteur
-    response = ask_tutor(user_message, user.current_level)
-    
-    # Sauvegarder la réponse
-    assistant_msg = Message(
-        session_id=session_id,
-        role="assistant",
-        content=response
-    )
-    db.session.add(assistant_msg)
-    session.updated_at = datetime.utcnow()
-    db.session.commit()
-    
-    return jsonify({
-        "user_message": user_msg.to_dict(),
-        "assistant_message": assistant_msg.to_dict()
-    }), 201
-
-
 @app.route("/api/sessions/<int:session_id>", methods=["GET"])
 def get_session(session_id):
     """Récupérer une session avec son historique"""
@@ -213,104 +355,198 @@ def get_session(session_id):
     return jsonify(session_data)
 
 
+@app.route("/api/sessions/<int:session_id>", methods=["DELETE"])
+def delete_session(session_id):
+    """Supprimer une session"""
+    session = Session.query.get_or_404(session_id)
+    db.session.delete(session)
+    db.session.commit()
+    return jsonify({"message": "Session supprimée"}), 200
+
+
+@app.route("/api/sessions/<int:session_id>/messages", methods=["POST"])
+def chat(session_id):
+    """Envoyer un message dans une session"""
+    try:
+        logger.info(f"\n🟢 ===== NOUVELLE REQUETE CHAT =====")
+        session = Session.query.get_or_404(session_id)
+        user = session.user
+        data = request.get_json()
+        
+        if not data:
+            logger.warning("Empty request data received")
+            return jsonify({"error": "Données de requête manquantes"}), 400
+            
+        user_message = data.get("message", "").strip()
+        
+        logger.info(f"📨 Message reçu: {user_message[:50]}...")
+        logger.info(f"👤 Utilisateur: {user.username}, Niveau: {user.current_level}")
+        
+        if not user_message:
+            return jsonify({"error": "Message vide"}), 400
+        
+        # Sauvegarder le message de l'utilisateur
+        user_msg = Message(
+            session_id=session_id,
+            role="user",
+            content=user_message
+        )
+        db.session.add(user_msg)
+        db.session.flush()
+        
+        # Récupérer l'historique
+        all_messages = Message.query.filter_by(session_id=session_id).order_by(Message.created_at.asc()).all()
+        conversation_history = []
+        for msg in all_messages[:-1]:
+            conversation_history.append({
+                "role": msg.role,
+                "content": msg.content
+            })
+        
+        logger.info(f"📚 Historique: {len(conversation_history)} messages")
+        logger.info(f"🤖 Appel ask_tutor...")
+        
+        # Générer la réponse du tuteur
+        response = ask_tutor(user_message, user.current_level, conversation_history)
+        
+        logger.info(f"✅ Réponse reçue: {len(response)} caractères")
+        logger.info(f"   Preview: {response[:100]}...")
+        
+        # Sauvegarder la réponse
+        assistant_msg = Message(
+            session_id=session_id,
+            role="assistant",
+            content=response
+        )
+        db.session.add(assistant_msg)
+        session.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        logger.info(f"🟢 ===== CHAT COMPLETE =====\n")
+        
+        return jsonify({
+            "user_message": user_msg.to_dict(),
+            "assistant_message": assistant_msg.to_dict()
+        }), 201
+    except Exception as e:
+        logger.error(f"\n🔴 ERREUR CHAT: {str(e)}", exc_info=True)
+        logger.error(f"🔴 ===== FIN ERREUR =====\n")
+        db.session.rollback()
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+
 # ============= ROUTES EXERCICES =============
 
 @app.route("/api/exercises/generate", methods=["POST"])
-def exercise():
+def generate_exercise_route():
     """Générer un exercice"""
-    data = request.get_json()
-    user_id = data.get("user_id")
-    topic = data.get("topic", "Python basics")
-    
-    user = User.query.get_or_404(user_id)
-    
-    # Générer l'exercice
-    exercise_text = generate_exercise(topic, user.current_level)
-    
-    # Sauvegarder dans la BD
-    exercise = Exercise(
-        user_id=user_id,
-        topic=topic,
-        level=user.current_level,
-        exercise_text=exercise_text
-    )
-    db.session.add(exercise)
-    db.session.commit()
-    
-    return jsonify({
-        "exercise_id": exercise.id,
-        "exercise": exercise_text,
-        "level": user.current_level
-    }), 201
+    try:
+        logger.info(f"\n🟣 ===== GENERATION EXERCICE =====")
+        data = request.get_json()
+        
+        if not data:
+            logger.warning("Empty request data received")
+            return jsonify({"error": "Données de requête manquantes"}), 400
+            
+        user_id = data.get("user_id")
+        topic = data.get("topic", "Python basics")
+        
+        logger.info(f"📚 Topic: {topic}")
+        user = User.query.get_or_404(user_id)
+        logger.info(f"👤 Utilisateur: {user.username}, Niveau: {user.current_level}")
+        
+        # Générer l'exercice
+        logger.info(f"🤖 Appel generate_exercise...")
+        exercise_text = generate_exercise(topic, user.current_level)
+        logger.info(f"✅ Exercice généré: {len(exercise_text)} caractères")
+        
+        # Sauvegarder dans la BD
+        exercise = Exercise(
+            user_id=user_id,
+            topic=topic,
+            level=user.current_level,
+            exercise_text=exercise_text
+        )
+        db.session.add(exercise)
+        db.session.commit()
+        
+        logger.info(f"🟣 ===== EXERCICE COMPLETE =====\n")
+        
+        return jsonify({
+            "exercise_id": exercise.id,
+            "exercise": exercise_text,
+            "topic": topic,
+            "level": user.current_level
+        }), 201
+    except Exception as e:
+        logger.error(f"\n🔴 ERREUR EXERCICE: {str(e)}", exc_info=True)
+        logger.error(f"🔴 ===== FIN ERREUR =====\n")
+        db.session.rollback()
+        return jsonify({"error": "Erreur interne du serveur"}), 500
 
 
 @app.route("/api/exercises/<int:exercise_id>/submit", methods=["POST"])
 def submit_exercise(exercise_id):
     """Soumettre une solution d'exercice"""
-    exercise = Exercise.query.get_or_404(exercise_id)
-    user = exercise.user
-    data = request.get_json()
-    student_code = data.get("code", "").strip()
-    
-    if not student_code:
-        return jsonify({"error": "Code vide"}), 400
-    
-    exercise.student_code = student_code
-    exercise.submitted_at = datetime.utcnow()
-    
-    # Corriger le code
-    correction = correct_answer(
-        student_code, 
-        exercise.topic, 
-        exercise.exercise_text,
-        user.current_level
-    )
-    exercise.correction = correction
-    
-    # Déterminer si c'est correct (simple heuristique)
-    is_correct = "✅" in correction or "correct" in correction.lower()
-    exercise.is_correct = is_correct
-    
-    # Mettre à jour les stats de l'utilisateur
-    user.total_exercises += 1
-    if is_correct:
-        user.exercises_correct += 1
-    
-    db.session.commit()
-    
-    return jsonify({
-        "exercise_id": exercise.id,
-        "is_correct": is_correct,
-        "correction": correction,
-        "user_stats": {
-            "total_exercises": user.total_exercises,
-            "success_rate": user.get_success_rate()
-        }
-    }), 200
-
-
-@app.route("/api/users/<int:user_id>/exercises", methods=["GET"])
-def get_user_exercises(user_id):
-    """Récupérer l'historique des exercices d'un utilisateur"""
-    user = User.query.get_or_404(user_id)
-    exercises = Exercise.query.filter_by(user_id=user_id).all()
-    
-    return jsonify({
-        "user_id": user_id,
-        "success_rate": user.get_success_rate(),
-        "exercises": [ex.to_dict() for ex in exercises]
-    })
-
-
-# ============= INITIALIZATION =============
-
-@app.before_request
-def init_db():
-    """Initialiser la BD au premier démarrage"""
-    db.create_all()
+    try:
+        exercise = Exercise.query.get_or_404(exercise_id)
+        data = request.get_json()
+        code = data.get("code", "").strip()
+        
+        if not code:
+            return jsonify({"error": "Code vide"}), 400
+        
+        # Corriger la réponse
+        correction = correct_answer(
+            code,
+            exercise.topic,
+            exercise.exercise_text,
+            exercise.level
+        )
+        
+        # Déterminer si correct avec la nouvelle fonction d'évaluation précise
+        from tutor import evaluate_exercise_accuracy
+        is_correct = evaluate_exercise_accuracy(correction)
+        
+        # Sauvegarder l'état précédent pour comparaison
+        was_submitted_before = exercise.submitted_at is not None
+        previous_correct = exercise.is_correct
+        
+        # Mettre à jour les champs de l'exercice
+        exercise.student_code = code
+        exercise.correction = correction
+        exercise.is_correct = is_correct
+        exercise.submitted_at = datetime.utcnow()
+        
+        # Mettre à jour les stats de l'utilisateur
+        user = exercise.user
+        if not was_submitted_before:  # Nouvelle soumission
+            user.total_exercises += 1
+            if is_correct:
+                user.exercises_correct += 1
+        else:  # Correction d'une soumission existante
+            if is_correct and not previous_correct:  # Passé de incorrect à correct
+                user.exercises_correct += 1
+            elif not is_correct and previous_correct:  # Passé de correct à incorrect
+                user.exercises_correct -= 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            "exercise_id": exercise.id,
+            "is_correct": is_correct,
+            "correction": correction,
+            "user_stats": {
+                "total_exercises": user.total_exercises,
+                "exercises_correct": user.exercises_correct,
+                "success_rate": user.get_success_rate()
+            }
+        }), 201
+    except Exception as e:
+        print(f"Erreur soumission exercice: {str(e)}")
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

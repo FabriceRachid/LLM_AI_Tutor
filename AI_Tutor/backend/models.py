@@ -1,6 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-import json
+from datetime import datetime, timezone
 from sqlalchemy import func
 
 db = SQLAlchemy()
@@ -13,12 +12,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    current_level = db.Column(db.String(20), default="beginner")  # beginner, intermediate, expert
-    topics_completed = db.Column(db.JSON, default=list)  # List of completed topics
+    password_hash = db.Column(db.String(255), nullable=True)  # Pour la migration, nullable=True d'abord
+    current_level = db.Column(db.String(20), default="beginner")
+    topics_completed = db.Column(db.JSON, default=list)
     total_exercises = db.Column(db.Integer, default=0)
     exercises_correct = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     sessions = db.relationship("Session", backref="user", lazy=True, cascade="all, delete-orphan")
     exercises = db.relationship("Exercise", backref="user", lazy=True, cascade="all, delete-orphan")
@@ -27,16 +27,19 @@ class User(db.Model):
         """Calcule le taux de réussite"""
         if self.total_exercises == 0:
             return 0
-        return (self.exercises_correct / self.total_exercises) * 100
+        return round((self.exercises_correct / self.total_exercises) * 100, 1)
     
     def to_dict(self):
         return {
             "id": self.id,
             "username": self.username,
+            "email": self.email,
             "current_level": self.current_level,
             "topics_completed": self.topics_completed,
             "success_rate": self.get_success_rate(),
-            "total_exercises": self.total_exercises
+            "total_exercises": self.total_exercises,
+            "exercises_correct": self.exercises_correct,
+            "created_at": self.created_at.isoformat()
         }
 
 
@@ -47,8 +50,8 @@ class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     topic = db.Column(db.String(100), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     messages = db.relationship("Message", backref="session", lazy=True, cascade="all, delete-orphan")
     
@@ -58,7 +61,8 @@ class Session(db.Model):
             "user_id": self.user_id,
             "topic": self.topic,
             "message_count": len(self.messages),
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
         }
 
 
@@ -70,11 +74,12 @@ class Message(db.Model):
     session_id = db.Column(db.Integer, db.ForeignKey("sessions.id"), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # "user" or "assistant"
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     def to_dict(self):
         return {
             "id": self.id,
+            "session_id": self.session_id,
             "role": self.role,
             "content": self.content,
             "created_at": self.created_at.isoformat()
@@ -88,20 +93,24 @@ class Exercise(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     topic = db.Column(db.String(100), nullable=False)
-    level = db.Column(db.String(20), nullable=False)  # beginner, intermediate, expert
+    level = db.Column(db.String(20), nullable=False)
     exercise_text = db.Column(db.Text, nullable=False)
     student_code = db.Column(db.Text, nullable=True)
     correction = db.Column(db.Text, nullable=True)
     is_correct = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     submitted_at = db.Column(db.DateTime, nullable=True)
     
     def to_dict(self):
         return {
             "id": self.id,
+            "user_id": self.user_id,
             "topic": self.topic,
             "level": self.level,
             "exercise_text": self.exercise_text,
+            "student_code": self.student_code,
+            "correction": self.correction,
             "is_correct": self.is_correct,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
+            "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None
         }
