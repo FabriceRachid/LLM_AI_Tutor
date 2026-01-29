@@ -32,12 +32,12 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
 # Configuration de la base de données
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URL", 
-    "sqlite:///tutordb.db"
-)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tutordb.db"
+print("📂 Database URI:", app.config["SQLALCHEMY_DATABASE_URI"])
+print("📂 Working directory:", os.getcwd())
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JSON_SORT_KEYS"] = False
+app.config["JSON_SORT_KEYS"] = False 
 
 # Configuration CORS
 if os.getenv("FLASK_ENV") == "production":
@@ -63,6 +63,8 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+    print("✅ Tables créées")
+
 
 
 # ============= FRONTEND ROUTES =============
