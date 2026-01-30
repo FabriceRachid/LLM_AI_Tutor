@@ -100,6 +100,12 @@ class Exercise(db.Model):
     is_correct = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     submitted_at = db.Column(db.DateTime, nullable=True)
+
+    score = db.Column(db.Integer, default=0)
+    detailed_scores = db.Column(db.Text, nullable=True)
+    report = db.Column(db.Text, nullable=True)
+    attempt_number = db.Column(db.Integer, default=1)
+    previous_attempts = db.Column(db.Text, nullable=True)
     
     def to_dict(self):
         return {
@@ -114,3 +120,18 @@ class Exercise(db.Model):
             "created_at": self.created_at.isoformat(),
             "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None
         }
+    
+    def get_grade_letter(self):
+        if self.score >= 90: return 'A+'
+        elif self.score >= 80: return 'A'
+        elif self.score >= 70: return 'B'
+        elif self.score >= 60: return 'C'
+        elif self.score >= 50: return 'D'
+        else: return 'F'
+    
+    def get_mastery_level(self):
+        if self.score >= 90: return 'Expert'
+        elif self.score >= 75: return 'Avancé'
+        elif self.score >= 60: return 'Intermédiaire'
+        elif self.score >= 40: return 'Débutant'
+        else: return 'Novice'

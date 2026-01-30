@@ -6,6 +6,8 @@ import sys
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+from exercise_grader import grade_exercise, generate_report_summary
+import json
 
 # Ajouter le répertoire parent pour les imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -489,7 +491,7 @@ def generate_exercise_route():
 
 @app.route("/api/exercises/<int:exercise_id>/submit", methods=["POST"])
 def submit_exercise(exercise_id):
-    """Soumettre une solution d'exercice"""
+    """Soumettre une solution d'exercice avec scoring détaillé"""
     try:
         exercise = Exercise.query.get_or_404(exercise_id)
         data = request.get_json()
@@ -498,55 +500,120 @@ def submit_exercise(exercise_id):
         if not code:
             return jsonify({"error": "Code vide"}), 400
         
-        # Corriger la réponse
-        correction = correct_answer(
-            code,
-            exercise.topic,
-            exercise.exercise_text,
-            exercise.level
+        logger.info(f"📝 Évaluation exercice {exercise_id}...")
+        
+        # ✨ NOUVEAU : Évaluation avec scoring détaillé
+        grading_result = grade_exercise(
+            student_code=code,
+            exercise_text=exercise.exercise_text,
+            topic=exercise.topic,
+            level=exercise.level
         )
         
-        # Déterminer si correct avec la nouvelle fonction d'évaluation précise
-        from tutor import evaluate_exercise_accuracy
-        is_correct = evaluate_exercise_accuracy(correction)
+        logger.info(f"✅ Score obtenu: {grading_result['score']}/100")
         
-        # Sauvegarder l'état précédent pour comparaison
+        # Sauvegarder l'état précédent pour historique
         was_submitted_before = exercise.submitted_at is not None
-        previous_correct = exercise.is_correct
         
-        # Mettre à jour les champs de l'exercice
+        # Si c'est une nouvelle tentative, sauvegarder l'ancienne
+        if was_submitted_before and exercise.student_code:
+            previous_attempts = json.loads(exercise.previous_attempts) if exercise.previous_attempts else []
+            previous_attempts.append({
+                'attempt': exercise.attempt_number,
+                'code': exercise.student_code,
+                'score': exercise.score,
+                'timestamp': exercise.submitted_at.isoformat() if exercise.submitted_at else None
+            })
+            exercise.previous_attempts = json.dumps(previous_attempts)
+            exercise.attempt_number += 1
+        
+        # Mettre à jour l'exercice avec les nouveaux résultats
         exercise.student_code = code
-        exercise.correction = correction
-        exercise.is_correct = is_correct
-        exercise.submitted_at = datetime.utcnow()
+        exercise.score = grading_result['score']
+        exercise.detailed_scores = json.dumps(grading_result['detailed_scores'])
+        exercise.report = json.dumps(grading_result['report'])
+        exercise.is_correct = grading_result['is_correct']
+        exercise.submitted_at = datetime.now(timezone.utc)
+        
+        # Générer le rapport textuel pour la correction
+        report_summary = generate_report_summary(grading_result)
+        exercise.correction = report_summary
         
         # Mettre à jour les stats de l'utilisateur
         user = exercise.user
-        if not was_submitted_before:  # Nouvelle soumission
+        previous_correct = exercise.is_correct if was_submitted_before else False
+        
+        if not was_submitted_before:
             user.total_exercises += 1
-            if is_correct:
+            if grading_result['is_correct']:
                 user.exercises_correct += 1
-        else:  # Correction d'une soumission existante
-            if is_correct and not previous_correct:  # Passé de incorrect à correct
+        else:
+            if grading_result['is_correct'] and not previous_correct:
                 user.exercises_correct += 1
-            elif not is_correct and previous_correct:  # Passé de correct à incorrect
+            elif not grading_result['is_correct'] and previous_correct:
                 user.exercises_correct -= 1
         
         db.session.commit()
         
+        logger.info(f"💾 Exercice sauvegardé avec score {grading_result['score']}")
+        
+        # Retourner le résultat complet
         return jsonify({
             "exercise_id": exercise.id,
-            "is_correct": is_correct,
-            "correction": correction,
+            "score": grading_result['score'],
+            "grade_letter": grading_result['report']['grade_letter'],
+            "mastery_level": grading_result['report']['mastery_level'],
+            "is_correct": grading_result['is_correct'],
+            "detailed_scores": grading_result['detailed_scores'],
+            "report": grading_result['report'],
+            "correction": report_summary,
+            "attempt_number": exercise.attempt_number,
             "user_stats": {
                 "total_exercises": user.total_exercises,
                 "exercises_correct": user.exercises_correct,
                 "success_rate": user.get_success_rate()
             }
         }), 201
+        
     except Exception as e:
-        print(f"Erreur soumission exercice: {str(e)}")
+        logger.error(f"Erreur soumission exercice: {str(e)}", exc_info=True)
         db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route("/api/exercises/<int:exercise_id>/history", methods=["GET"])
+def get_exercise_history(exercise_id):
+    """Récupérer l'historique de toutes les tentatives d'un exercice"""
+    try:
+        exercise = Exercise.query.get_or_404(exercise_id)
+        
+        history = []
+        
+        # Tentatives précédentes
+        if exercise.previous_attempts:
+            previous = json.loads(exercise.previous_attempts)
+            history.extend(previous)
+        
+        # Tentative actuelle
+        if exercise.student_code:
+            history.append({
+                'attempt': exercise.attempt_number,
+                'code': exercise.student_code,
+                'score': exercise.score,
+                'grade_letter': exercise.get_grade_letter(),
+                'is_correct': exercise.is_correct,
+                'timestamp': exercise.submitted_at.isoformat() if exercise.submitted_at else None
+            })
+        
+        return jsonify({
+            "exercise_id": exercise.id,
+            "total_attempts": len(history),
+            "best_score": max([h.get('score', 0) for h in history]) if history else 0,
+            "history": history
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erreur récupération historique: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
