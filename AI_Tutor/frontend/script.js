@@ -7,11 +7,13 @@ let currentSession = null;
 let currentExercise = null;
 let isLoading = false;
 let allSessions = [];
+let messageTimestamps = {}; // Stockage des horodatages
 
 // ==========================================
 // INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
+    loadMessageTimestamps();
     await initializeApp();
     setupEventListeners();
 });
@@ -94,6 +96,70 @@ function setupEventListeners() {
     document.getElementById('exerciseBtn')?.addEventListener('click', () => requestExercise());
     document.getElementById('changeLevelBtn')?.addEventListener('click', showChangeLevelModal);
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
+    
+    // User creation event
+    document.getElementById('createUserBtn')?.addEventListener('click', createNewUser);
+}
+
+function showLoginForm() {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('signupForm').style.display = 'none';
+}
+
+function showSignupForm() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'block';
+}
+
+async function handleLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!username || !password) {
+        showToast('Veuillez remplir tous les champs', 'error');
+        return;
+    }
+    
+    await loginUser(username, password);
+}
+
+async function handleSignup() {
+    const username = document.getElementById('usernameInput').value.trim();
+    const email = document.getElementById('emailInput').value.trim();
+    
+    if (!username || !email) {
+        showToast('Veuillez remplir tous les champs', 'error');
+        return;
+    }
+    
+    if (username.length < 3) {
+        showToast("Le nom d'utilisateur doit contenir au moins 3 caractères", "error");
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email })
+        });
+        
+        if (response.ok) {
+            const user = await response.json();
+            localStorage.setItem('userId', user.id);
+            currentUser = user;
+            
+            hideLoginModal();
+            await initializeApp();
+            showToast('Compte créé avec succès! 👋', 'success');
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Erreur de création', 'error');
+        }
+    } catch (error) {
+        console.error('Erreur signup:', error);
+        showToast('Erreur de réseau', 'error');
+    }
 }
 
 function updateUserDisplay() {
@@ -168,20 +234,16 @@ function displaySessions() {
         sessionEl.className = `session-item ${currentSession?.id === session.id ? 'active' : ''}`;
         
         sessionEl.innerHTML = `
-            <div style="flex: 1;">
-                <div class="session-topic">${session.topic || 'Chat général'}</div>
-                <div class="session-time">${new Date(session.updated_at).toLocaleDateString()}</div>
-            </div>
-            <button class="delete-session-btn" data-id="${session.id}" 
-                    style="background: none; border: none; color: var(--error-red); cursor: pointer; font-size: 1.2rem; padding: 0;">
+            <div class="session-text">${session.topic || 'Chat général'}</div>
+            <button class="delete-session" data-id="${session.id}">
                 🗑️
             </button>
         `;
         
         const loadHandler = () => loadSession(session.id);
-        const deleteBtn = sessionEl.querySelector('.delete-session-btn');
+        const deleteBtn = sessionEl.querySelector('.delete-session');
         
-        sessionEl.querySelector('div').addEventListener('click', loadHandler);
+        sessionEl.querySelector('.session-text').addEventListener('click', loadHandler);
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteSession(session.id);
@@ -272,6 +334,55 @@ async function createNewSession(topic) {
     }
 }
 
+async function createAutoSession(firstMessage) {
+    try {
+        // Extraire un sujet de la première question
+        const topic = extractTopicFromMessage(firstMessage);
+        
+        const response = await fetch('/api/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                topic: topic
+            })
+        });
+        
+        if (response.ok) {
+            currentSession = await response.json();
+            document.getElementById('currentTopic').textContent = currentSession.topic;
+            await loadUserSessions();
+            showToast('Session créée automatiquement', 'success');
+        } else {
+            throw new Error('Erreur création session');
+        }
+    } catch (error) {
+        console.error('Erreur auto-session:', error);
+        // Créer une session par défaut
+        currentSession = { id: Date.now(), topic: 'Discussion générale' };
+        document.getElementById('currentTopic').textContent = 'Discussion générale';
+    }
+}
+
+function extractTopicFromMessage(message) {
+    // Utiliser directement la première requête comme nom de session
+    // Limiter à 50 caractères pour éviter les noms trop longs
+    let topic = message.trim();
+    
+    // Si le message est trop long, on le tronque intelligemment
+    if (topic.length > 50) {
+        // Trouver le dernier espace avant 50 caractères
+        const lastSpace = topic.lastIndexOf(' ', 47);
+        if (lastSpace > 30) {
+            topic = topic.substring(0, lastSpace) + '...';
+        } else {
+            topic = topic.substring(0, 47) + '...';
+        }
+    }
+    
+    return topic;
+}
+
 async function deleteSession(sessionId) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette session?')) {
         return;
@@ -321,16 +432,16 @@ function handleKeyPress(event) {
 }
 
 async function sendMessage() {
-    if (!currentSession) {
-        showToast('Créez une session d\'abord', 'error');
-        return;
-    }
-
     const input = document.getElementById('messageInput');
     const message = input.value.trim();
     
     if (!message || isLoading) return;
     
+    // Créer une session automatiquement si nécessaire
+    if (!currentSession) {
+        await createAutoSession(message);
+    }
+
     isLoading = true;
     addMessageToUI(message, 'user');
     input.value = '';
@@ -398,12 +509,22 @@ function addMessageToUI(content, role) {
     const avatar = role === 'user' ? '👤' : '🤖';
     const name = role === 'user' ? currentUser.username : 'Tuteur IA';
     
+    // Génération d'un ID unique pour le message
+    const messageId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    // Horodatage persistant
+    if (!messageTimestamps[messageId]) {
+        messageTimestamps[messageId] = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+    }
+    
+    const displayTime = messageTimestamps[messageId];
+    
     messageDiv.innerHTML = `
         <div class="message-avatar">${avatar}</div>
         <div class="message-content-wrapper">
             <div class="message-header">
                 <span class="message-name">${name}</span>
-                <span class="message-time">${new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</span>
+                <span class="message-time">${displayTime}</span>
             </div>
             <div class="message-content">${formatMessage(content)}</div>
         </div>
@@ -631,8 +752,112 @@ function showToast(message, type = 'success') {
 }
 
 function logout() {
+    // Sauvegarder les horodatages
+    localStorage.setItem('messageTimestamps', JSON.stringify(messageTimestamps));
+    
+    // Supprimer les données utilisateur
     localStorage.removeItem('userId');
     currentUser = null;
     currentSession = null;
-    location.reload();
+    
+    // Appliquer l'état déconnecté
+    document.body.classList.add('logout-state');
+    
+    // Afficher l'overlay de login
+    document.getElementById('logoutOverlay').classList.remove('hidden');
+    
+    // Réinitialiser l'interface
+    document.getElementById('userName').textContent = 'Utilisateur';
+    document.getElementById('userLevel').textContent = 'Niveau: Débutant';
+    document.getElementById('messagesContainer').innerHTML = `
+        <div class="welcome-message">
+            <div class="welcome-title">🎓 Bienvenue sur AI Tutor</div>
+            <div class="welcome-subtitle">Connectez-vous pour commencer à apprendre</div>
+        </div>
+    `;
+    
+    // Vider la liste des sessions
+    document.getElementById('sessionsList').innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Connectez-vous pour voir vos sessions</p>';
+    
+    showToast('Déconnecté avec succès', 'info');
+}
+
+// Charger les horodatages au démarrage
+function loadMessageTimestamps() {
+    const saved = localStorage.getItem('messageTimestamps');
+    if (saved) {
+        messageTimestamps = JSON.parse(saved);
+    }
+}
+
+function showLoginModal() {
+    // Réactiver l'interface
+    document.body.classList.remove('logout-state');
+    document.getElementById('logoutOverlay').classList.add('hidden');
+    
+    // Afficher le modal de création d'utilisateur (comme au début)
+    document.getElementById('userModal').classList.add('show');
+}
+
+function hideLoginModal() {
+    document.getElementById('userModal').classList.remove('show');
+}
+
+// Fonction de login
+async function loginUser(username, password) {
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('userId', data.user_id);
+            currentUser = { id: data.user_id, username: data.username };
+            
+            hideLoginModal();
+            await initializeApp();
+            showToast('Connecté avec succès! 👋', 'success');
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Erreur de connexion', 'error');
+        }
+    } catch (error) {
+        console.error('Erreur login:', error);
+        showToast('Erreur de réseau', 'error');
+    }
+}
+
+// Mise à jour de l'initialisation pour vérifier login existant
+async function checkExistingLogin() {
+    const savedUserId = localStorage.getItem('userId');
+    if (savedUserId) {
+        try {
+            const response = await fetch(`${API_URL}/users/${savedUserId}`);
+            if (response.ok) {
+                currentUser = await response.json();
+                await loadUserSessions();
+                updateUserDisplay();
+                return true;
+            }
+        } catch (error) {
+            console.error('Erreur vérification login:', error);
+        }
+    }
+    return false;
+}
+
+// Mise à jour de initializeApp pour inclure la vérification
+async function initializeApp() {
+    const isAlreadyLoggedIn = await checkExistingLogin();
+    if (!isAlreadyLoggedIn) {
+        showLoginModal();
+        return;
+    }
+    
+    await loadUserSessions();
+    updateUserDisplay();
+    showToast('Bienvenue de retour! 👋', 'success');
 }

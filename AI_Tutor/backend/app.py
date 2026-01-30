@@ -186,6 +186,34 @@ def search_users():
     
     return jsonify(user.to_dict())
 
+@app.route("/api/users/<int:user_id>/exercises", methods=["GET"])
+def get_user_exercises_stats(user_id):
+    """Get user exercises and statistics (only submitted ones)"""
+    user = User.query.get_or_404(user_id)
+    
+    # Ne compter que les exercices soumis
+    submitted_exercises = Exercise.query.filter(
+        Exercise.user_id == user_id,
+        Exercise.submitted_at.isnot(None)
+    ).all()
+    
+    total_exercises = len(submitted_exercises)
+    correct_exercises = len([ex for ex in submitted_exercises if ex.is_correct])
+    
+    success_rate = (correct_exercises / total_exercises * 100) if total_exercises > 0 else 0
+    
+    return jsonify({
+        "total_exercises": total_exercises,
+        "exercises_correct": correct_exercises,
+        "success_rate": success_rate,
+        "exercises": [{
+            "id": ex.id,
+            "topic": ex.topic,
+            "is_correct": ex.is_correct,
+            "submitted_at": ex.submitted_at.isoformat() if ex.submitted_at else None
+        } for ex in submitted_exercises]
+    })
+
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -203,13 +231,7 @@ def login():
         if not user or not check_password_hash(user.password_hash, password):
             return jsonify({"error": "Identifiants invalides"}), 401
         
-        # Créer une session
-        session = Session(user_id=user.id, topic="Session de connexion")
-        db.session.add(session)
-        db.session.commit()
-        
         return jsonify({
-            "session_id": session.id,
             "user_id": user.id,
             "username": user.username
         }), 200
@@ -259,13 +281,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # Créer une session
-        user_session = Session(user_id=user.id, topic="Session d'inscription")
-        db.session.add(user_session)
-        db.session.commit()
-        
         return jsonify({
-            "session_id": user_session.id,
             "user_id": user.id,
             "username": user.username
         }), 201

@@ -12,6 +12,16 @@
 <body>
     <div class="grid-overlay"></div>
 
+    <!-- Logout Overlay -->
+    <div id="logoutOverlay" class="logout-overlay hidden">
+        <div class="login-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h2 style="margin-bottom: 1rem; color: var(--electric-blue);">Déconnecté</h2>
+            <p style="margin-bottom: 2rem; color: var(--text-secondary);">Vous avez été déconnecté de votre session</p>
+            <button class="login-btn" onclick="window.location.href='/login.html'">🔑 Se connecter</button>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast">
         <div class="toast-icon" id="toastIcon"></div>
