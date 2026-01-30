@@ -7,7 +7,7 @@ let currentSession = null;
 let currentExercise = null;
 let isLoading = false;
 let allSessions = [];
-let messageTimestamps = {}; // Stockage des horodatages
+let messageTimestamps = {}; // Stockage des horodatages persistants
 
 // ==========================================
 // INITIALIZATION
@@ -76,7 +76,7 @@ async function createNewUser() {
             localStorage.setItem('userId', currentUser.id);
             modal.classList.remove('show');
             updateUserDisplay();
-            showToast(`Bienvenue ${username}! 🎓`, 'success');
+            showToast(`Bienvenue ${username}! `, 'success');
         } catch (error) {
             console.error('Erreur:', error);
             showToast('Erreur création utilisateur', 'error');
@@ -151,7 +151,7 @@ async function handleSignup() {
             
             hideLoginModal();
             await initializeApp();
-            showToast('Compte créé avec succès! 👋', 'success');
+            showToast('Compte créé avec succès! ', 'success');
         } else {
             const error = await response.json();
             showToast(error.error || 'Erreur de création', 'error');
@@ -275,15 +275,24 @@ function displayChatMessages() {
     if (!currentSession.messages || currentSession.messages.length === 0) {
         container.innerHTML = `
             <div class="welcome-message">
-                <div class="welcome-title">📚 ${currentSession.topic || 'Chat'}</div>
+                <div class="welcome-title"> ${currentSession.topic || 'Chat'}</div>
                 <div class="welcome-subtitle">Posez vos questions sur ${currentSession.topic || 'Python'}!</div>
             </div>
         `;
         return;
     }
     
+    // Afficher les messages avec leurs horodatages exacts depuis la base de données
     currentSession.messages.forEach(msg => {
-        addMessageToUI(msg.content, msg.role);
+        if (msg.created_at) {
+            // Convertir l'horodatage ISO en format lisible
+            const date = new Date(msg.created_at);
+            const displayTime = date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+            displayMessageWithTimestamp(msg.content, msg.role, displayTime);
+        } else {
+            // Fallback si pas d'horodatage (pour les anciens messages)
+            addMessageToUI(msg.content, msg.role);
+        }
     });
     
     container.scrollTop = container.scrollHeight;
@@ -400,7 +409,7 @@ async function deleteSession(sessionId) {
             currentSession = null;
             document.getElementById('messagesContainer').innerHTML = `
                 <div class="welcome-message">
-                    <div class="welcome-title">📚 Bienvenue</div>
+                    <div class="welcome-title"> Bienvenue</div>
                     <div class="welcome-subtitle">Créez une nouvelle session pour commencer</div>
                 </div>
             `;
@@ -434,6 +443,7 @@ function handleKeyPress(event) {
 async function sendMessage() {
     const input = document.getElementById('messageInput');
     const message = input.value.trim();
+    const sendBtn = document.getElementById('sendBtn');
     
     if (!message || isLoading) return;
     
@@ -443,6 +453,7 @@ async function sendMessage() {
     }
 
     isLoading = true;
+    sendBtn.classList.add('sending');
     addMessageToUI(message, 'user');
     input.value = '';
     input.style.height = 'auto';
@@ -470,7 +481,19 @@ async function sendMessage() {
         removeTypingIndicator();
         
         if (data.assistant_message && data.assistant_message.content) {
-            addMessageToUI(data.assistant_message.content, 'assistant');
+            // Utiliser les horodatages du serveur pour afficher les messages
+            if (data.user_message && data.user_message.created_at) {
+                const userDate = new Date(data.user_message.created_at);
+                const userDisplayTime = userDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                displayMessageWithTimestamp(data.user_message.content, 'user', userDisplayTime);
+            }
+            if (data.assistant_message && data.assistant_message.created_at) {
+                const aiDate = new Date(data.assistant_message.created_at);
+                const aiDisplayTime = aiDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                displayMessageWithTimestamp(data.assistant_message.content, 'assistant', aiDisplayTime);
+            } else {
+                addMessageToUI(data.assistant_message.content, 'assistant');
+            }
         } else {
             showToast('Réponse vide reçue du serveur', 'error');
         }
@@ -492,6 +515,7 @@ async function sendMessage() {
         addMessageToUI(`❌ Erreur: ${error.message}`, 'assistant');
     } finally {
         isLoading = false;
+        sendBtn.classList.remove('sending');
         document.getElementById('messageInput').focus();
     }
 }
@@ -506,21 +530,14 @@ function addMessageToUI(content, role) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
     
-    const avatar = role === 'user' ? '👤' : '🤖';
     const name = role === 'user' ? currentUser.username : 'Tuteur IA';
     
-    // Génération d'un ID unique pour le message
-    const messageId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    
-    // Horodatage persistant
-    if (!messageTimestamps[messageId]) {
-        messageTimestamps[messageId] = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
-    }
-    
-    const displayTime = messageTimestamps[messageId];
+    // Utiliser l'horodatage exact du serveur si disponible, sinon horodatage local
+    const timestamp = new Date();
+    const displayTime = timestamp.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
     
     messageDiv.innerHTML = `
-        <div class="message-avatar">${avatar}</div>
+        <div class="message-avatar" id="avatar-${Date.now()}"></div>
         <div class="message-content-wrapper">
             <div class="message-header">
                 <span class="message-name">${name}</span>
@@ -532,6 +549,25 @@ function addMessageToUI(content, role) {
     
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
+    
+    // Ajouter l'animation Lottie pour l'avatar
+    const avatarId = messageDiv.querySelector('.message-avatar').id;
+    if (role === 'assistant') {
+        setTimeout(() => {
+            bodymovin.loadAnimation({
+                container: document.getElementById(avatarId),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'Live chatbot.json',
+                rendererSettings: {
+                    preserveAspectRatio: 'xMidYMid meet'
+                }
+            });
+        }, 100);
+    } else {
+        document.getElementById(avatarId).textContent = '👤';
+    }
 }
 
 function formatMessage(content) {
@@ -553,17 +589,82 @@ function formatMessage(content) {
     return content;
 }
 
+// Fonction pour afficher un message avec un horodatage spécifique
+function displayMessageWithTimestamp(content, role, displayTime) {
+    const container = document.getElementById('messagesContainer');
+    
+    // Supprimer le message de bienvenue s'il existe
+    const welcome = container.querySelector('.welcome-message');
+    if (welcome) welcome.remove();
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    const name = role === 'user' ? currentUser.username : 'Tuteur IA';
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar" id="display-avatar-${Date.now()}"></div>
+        <div class="message-content-wrapper">
+            <div class="message-header">
+                <span class="message-name">${name}</span>
+                <span class="message-time">${displayTime}</span>
+            </div>
+            <div class="message-content">${formatMessage(content)}</div>
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+    
+    // Ajouter l'animation Lottie pour l'avatar
+    const avatarId = messageDiv.querySelector('.message-avatar').id;
+    if (role === 'assistant') {
+        setTimeout(() => {
+            bodymovin.loadAnimation({
+                container: document.getElementById(avatarId),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'Live chatbot.json',
+                rendererSettings: {
+                    preserveAspectRatio: 'xMidYMid meet'
+                }
+            });
+        }, 100);
+    } else {
+        document.getElementById(avatarId).textContent = '👤';
+    }
+}
+
 function showTypingIndicator() {
     const container = document.getElementById('messagesContainer');
     const typingDiv = document.createElement('div');
     typingDiv.id = 'typingIndicator';
     typingDiv.className = 'message assistant';
+    
+    // Horodatage exact pour l'IA
+    const timestamp = new Date();
+    const displayTime = timestamp.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+    
     typingDiv.innerHTML = `
-        <div class="message-avatar">🤖</div>
-        <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
+        <div class="message-avatar"></div>
+        <div class="message-content-wrapper">
+            <div class="message-header">
+                <span class="message-name">Tuteur IA</span>
+                <span class="message-time">${displayTime}</span>
+            </div>
+            <div class="typing-indicator">
+                <div class="bubble-thinking">
+                    <div class="brain-activity">
+                        <div class="neuron"></div>
+                        <div class="neuron"></div>
+                        <div class="neuron"></div>
+                        <div class="neuron"></div>
+                        <div class="neuron"></div>
+                    </div>
+                    <div class="ai-status-text">Réflexion en cours...</div>
+                </div>
+            </div>
         </div>
     `;
     container.appendChild(typingDiv);
@@ -659,7 +760,7 @@ async function submitExercise() {
         
         currentUser = { ...currentUser, ...result.user_stats };
         updateUserDisplay();
-        showToast(result.is_correct ? 'Excellent! 🎉' : 'Continue tes efforts! 💪', 'success');
+        showToast(result.is_correct ? 'Excellent! ' : 'Continue tes efforts! ', 'success');
     } catch (error) {
         console.error('Erreur:', error);
         
@@ -726,7 +827,7 @@ async function changeLevel(newLevel) {
         
         currentUser = await response.json();
         updateUserDisplay();
-        showToast(`Niveau changé en ${translateLevel(newLevel)}! 🚀`, 'success');
+        showToast(`Niveau changé en ${translateLevel(newLevel)}! `, 'success');
     } catch (error) {
         console.error('Erreur:', error);
         showToast('Erreur changement niveau', 'error');
@@ -753,7 +854,7 @@ function showToast(message, type = 'success') {
 
 function logout() {
     // Sauvegarder les horodatages
-    localStorage.setItem('messageTimestamps', JSON.stringify(messageTimestamps));
+    saveMessageTimestamps();
     
     // Supprimer les données utilisateur
     localStorage.removeItem('userId');
@@ -771,7 +872,7 @@ function logout() {
     document.getElementById('userLevel').textContent = 'Niveau: Débutant';
     document.getElementById('messagesContainer').innerHTML = `
         <div class="welcome-message">
-            <div class="welcome-title">🎓 Bienvenue sur AI Tutor</div>
+            <div class="welcome-title"> Bienvenue sur AI Tutor</div>
             <div class="welcome-subtitle">Connectez-vous pour commencer à apprendre</div>
         </div>
     `;
@@ -780,6 +881,11 @@ function logout() {
     document.getElementById('sessionsList').innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Connectez-vous pour voir vos sessions</p>';
     
     showToast('Déconnecté avec succès', 'info');
+}
+
+// Sauvegarder les horodatages dans localStorage
+function saveMessageTimestamps() {
+    localStorage.setItem('messageTimestamps', JSON.stringify(messageTimestamps));
 }
 
 // Charger les horodatages au démarrage
@@ -819,7 +925,7 @@ async function loginUser(username, password) {
             
             hideLoginModal();
             await initializeApp();
-            showToast('Connecté avec succès! 👋', 'success');
+            showToast('Connecté avec succès! ', 'success');
         } else {
             const error = await response.json();
             showToast(error.error || 'Erreur de connexion', 'error');
@@ -859,5 +965,5 @@ async function initializeApp() {
     
     await loadUserSessions();
     updateUserDisplay();
-    showToast('Bienvenue de retour! 👋', 'success');
+    showToast('Bienvenue sur AI Tutor ! ', 'success');
 }
