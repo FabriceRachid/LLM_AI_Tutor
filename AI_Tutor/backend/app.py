@@ -19,7 +19,8 @@ except ImportError:
     from .tutor import ask_tutor, generate_exercise, correct_answer
     from .models import db, User, Session, Message, Exercise
 
-from datetime import datetime
+
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -188,6 +189,48 @@ def search_users():
     
     return jsonify(user.to_dict())
 
+@app.route("/api/users/<int:user_id>/exercises", methods=["GET"])
+def get_user_exercises_stats(user_id):
+    """Get user exercises and statistics (only submitted ones)"""
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Récupérer uniquement les exercices SOUMIS (avec submitted_at non null)
+        submitted_exercises = Exercise.query.filter(
+            Exercise.user_id == user_id,
+            Exercise.submitted_at.isnot(None)  # <-- IMPORTANT: seulement les soumis
+        ).order_by(Exercise.submitted_at.desc()).all()
+        
+        total_exercises = len(submitted_exercises)
+        correct_exercises = len([ex for ex in submitted_exercises if ex.is_correct])
+        
+        success_rate = (correct_exercises / total_exercises * 100) if total_exercises > 0 else 0
+        
+        # Calculer la série actuelle (streak)
+        streak = 0
+        for ex in submitted_exercises:
+            if ex.is_correct:
+                streak += 1
+            else:
+                break
+        
+        return jsonify({
+            "total_exercises": total_exercises,
+            "exercises_correct": correct_exercises,
+            "success_rate": round(success_rate, 1),
+            "streak": streak,
+            "exercises": [{
+                "id": ex.id,
+                "topic": ex.topic,
+                "is_correct": ex.is_correct,
+                "score": ex.score,
+                "submitted_at": ex.submitted_at.isoformat() if ex.submitted_at else None,
+                "created_at": ex.created_at.isoformat()
+            } for ex in submitted_exercises]
+        }), 200
+    except Exception as e:
+        logger.error(f"Erreur stats exercices: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -205,13 +248,7 @@ def login():
         if not user or not check_password_hash(user.password_hash, password):
             return jsonify({"error": "Identifiants invalides"}), 401
         
-        # Créer une session
-        session = Session(user_id=user.id, topic="Session de connexion")
-        db.session.add(session)
-        db.session.commit()
-        
         return jsonify({
-            "session_id": session.id,
             "user_id": user.id,
             "username": user.username
         }), 200
@@ -261,13 +298,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # Créer une session
-        user_session = Session(user_id=user.id, topic="Session d'inscription")
-        db.session.add(user_session)
-        db.session.commit()
-        
         return jsonify({
-            "session_id": user_session.id,
             "user_id": user.id,
             "username": user.username
         }), 201
@@ -502,7 +533,7 @@ def submit_exercise(exercise_id):
         
         logger.info(f"📝 Évaluation exercice {exercise_id}...")
         
-        # ✨ NOUVEAU : Évaluation avec scoring détaillé
+        # ✨ NOUVEAU : Évaluation avec scoring détaillé via exercise_grader
         grading_result = grade_exercise(
             student_code=code,
             exercise_text=exercise.exercise_text,
@@ -541,17 +572,11 @@ def submit_exercise(exercise_id):
         
         # Mettre à jour les stats de l'utilisateur
         user = exercise.user
-        previous_correct = exercise.is_correct if was_submitted_before else False
         
         if not was_submitted_before:
             user.total_exercises += 1
             if grading_result['is_correct']:
                 user.exercises_correct += 1
-        else:
-            if grading_result['is_correct'] and not previous_correct:
-                user.exercises_correct += 1
-            elif not grading_result['is_correct'] and previous_correct:
-                user.exercises_correct -= 1
         
         db.session.commit()
         
@@ -580,6 +605,16 @@ def submit_exercise(exercise_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
     
+    
+@app.route("/api/exercises/<int:exercise_id>", methods=["GET"])
+def get_exercise(exercise_id):
+    """Récupérer les détails d'un exercice"""
+    try:
+        exercise = Exercise.query.get_or_404(exercise_id)
+        return jsonify(exercise.to_dict()), 200
+    except Exception as e:
+        logger.error(f"Erreur récupération exercice: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/exercises/<int:exercise_id>/history", methods=["GET"])
 def get_exercise_history(exercise_id):

@@ -10,7 +10,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  
+    
+    
     <div class="grid-overlay"></div>
+    
+    <!-- Logout Overlay -->
+    <div id="logoutOverlay" class="logout-overlay hidden">
+        <div class="login-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h2 style="margin-bottom: 1rem; color: var(--electric-blue);">Session terminée</h2>
+            <p style="margin-bottom: 2rem; color: var(--text-secondary);">
+                Vous avez été déconnecté. Pour continuer, veuillez vous reconnecter.
+            </p>
+            <button class="login-btn" onclick="window.location.href='login.html'">
+                🔑 Se connecter à nouveau
+            </button>
+            <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                Ou <a href="javascript:location.reload()" style="color: var(--electric-blue);">recharger la page</a> pour réessayer
+            </p>
+        </div>
+    </div>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast">
@@ -100,24 +120,33 @@
         </div>
     </div>
 
-    <!-- Exercise Modal -->
-    <div id="exerciseModal" class="modal">
+    <!-- Exercise Modal - MODIFIÉ POUR MEILLEUR LAYOUT -->
+   <div id="exerciseModal" class="modal">
         <div class="modal-content">
+            
+            <!-- Header FIXE -->
             <div class="modal-header">
                 <h2 class="modal-title">💪 Exercice de Pratique</h2>
                 <button class="close-modal" onclick="closeExerciseModal()">✕</button>
             </div>
-            <div class="exercise-text" id="exerciseText"></div>
-            <textarea class="code-editor" id="codeEditor" placeholder="Écrivez votre code Python ici..."></textarea>
-            <div style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem;">
-                <button class="btn btn-primary" style="flex: 1;" onclick="submitExercise()">
+            
+            <!-- ✨ ZONE SCROLLABLE -->
+            <div class="modal-body-scroll">
+                <div class="exercise-text" id="exerciseText"></div>
+                <textarea class="code-editor" id="codeEditor" placeholder="Écrivez votre code Python ici..."></textarea>
+                <div id="correctionResult"></div>
+            </div>
+            
+            <!-- Boutons FIXES -->
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="submitExercise()">
                     ✅ Soumettre la solution
                 </button>
-                <button class="btn btn-secondary" style="flex: 1;" onclick="closeExerciseModal()">
+                <button class="btn btn-secondary" onclick="closeExerciseModal()">
                     ✕ Fermer
                 </button>
             </div>
-            <div id="correctionResult" style="padding: 0 1.5rem 1.5rem;"></div>
+            
         </div>
     </div>
 
@@ -143,6 +172,7 @@
             </div>
         </div>
     </header>
+    
 
     <div class="container">
         <div class="main-layout">
@@ -202,6 +232,9 @@
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <button class="btn btn-primary" id="exerciseBtn" style="width: 100%;">
                         💪 Exercice
+                    </button>
+                    <button class="btn btn-primary" onclick="showExerciseHistory()" style="width: 100%;">
+                        📚 Réviser mes exercices
                     </button>
                     <button class="btn btn-secondary" id="changeLevelBtn" style="width: 100%;">
                         🎯 Changer niveau

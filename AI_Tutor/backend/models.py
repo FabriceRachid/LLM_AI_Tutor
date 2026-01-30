@@ -41,7 +41,25 @@ class User(db.Model):
             "exercises_correct": self.exercises_correct,
             "created_at": self.created_at.isoformat()
         }
+    def update_exercise_stats(self, exercise, previous_correct=False):
+        """Met à jour les statistiques d'exercice de manière sécurisée"""
+        if exercise.submitted_at is None:
+            # Ne pas compter les exercices non soumis
+            return
+        
+        # Vérifier si c'est une nouvelle soumission
+        if exercise.attempt_number == 1:
+            self.total_exercises += 1
+            if exercise.is_correct:
+                self.exercises_correct += 1
+        else:
+            # Si c'est une nouvelle tentative, ajuster seulement si le résultat change
+            if exercise.is_correct and not previous_correct:
+                self.exercises_correct += 1
+            elif not exercise.is_correct and previous_correct:
+                self.exercises_correct -= 1
 
+    
 
 class Session(db.Model):
     """Modèle pour une session de chat"""
