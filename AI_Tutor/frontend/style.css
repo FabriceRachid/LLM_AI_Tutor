@@ -1884,11 +1884,19 @@ header {
         display: none;
     }
     
-    /* ✅ Bouton déconnexion très petit mobile */
+    /* ✅ Bouton déconnexion très petit mobile - VISIBILITÉ GARANTIE */
     .logout-btn {
         padding: 0.4rem 0.6rem !important;
         min-width: 40px !important;
         min-height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--deep-blue) !important;
+        border: 1px solid var(--electric-blue) !important;
+        color: white !important;
+        position: relative !important;
+        z-index: 1000 !important;
     }
     
     .logout-icon {
@@ -2035,29 +2043,38 @@ header {
 }
 
 /* ✅ TRÈS PETIT MOBILE (360px et moins) */
-/* @media (max-width: 360px) {
+@media (max-width: 360px) {
     .logo-text {
-        display: none;
+        display: flex !important;
     }
     
     .user-info {
-        display: none;
+        display: flex !important;
     }
     
     .header-user {
         margin-left: auto;
     }
     
-    
+    /* ✅ BOUTON DÉCONNEXION 100% VISIBLE */
     .logout-btn {
         display: flex !important;
-        padding: 0.4rem 0.5rem !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.4rem 0.6rem !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        background: var(--deep-blue) !important;
+        border: 1px solid var(--electric-blue) !important;
+        color: white !important;
+        position: relative !important;
+        z-index: 1000 !important;
     }
     
     .logout-icon {
         font-size: 1.1rem !important;
+        display: block !important;
+        line-height: 1 !important;
     }
     
     .dropdown-toggle {
@@ -2086,7 +2103,7 @@ header {
     .sidebar {
         width: 95%;
     }
-} */
+}
 
 /* TOUCH DEVICES - Amélioration tactile */
 @media (hover: none) and (pointer: coarse) {
@@ -2206,7 +2223,7 @@ header {
 }
 
 /* OPTIMISATION PERFORMANCE MOBILE */
-/* @media (max-width: 768px) {
+@media (max-width: 768px) {
     * {
         animation-duration: 0.2s !important;
     }
@@ -2224,197 +2241,5 @@ header {
         -webkit-overflow-scrolling: touch;
         scroll-behavior: smooth;
     }
-} */
-
-/* 🔧 CSS DE DEBUG - FORCE TOUT À S'AFFICHER
-   Ajoutez ce code TEMPORAIREMENT à la fin de votre style.css
-   pour diagnostiquer le problème */
-
-/* ✅ FORCER L'AFFICHAGE DU HEADER - VERSION DEBUG */
-@media (max-width: 768px) {
-    /* Header visible */
-    header {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        padding: 0.75rem 0 !important;
-        background: rgba(19, 24, 54, 0.95) !important;
-    }
-    
-    .header-content {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-    }
-    
-    /* Menu hamburger */
-    .mobile-menu-btn {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        order: -1 !important;
-        background: var(--deep-blue) !important;
-        color: white !important;
-        border: 1px solid var(--electric-blue) !important;
-        padding: 0.5rem 0.75rem !important;
-        border-radius: 6px !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-    }
-    
-    .hamburger-icon {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    /* Logo */
-    .logo {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        gap: 0.75rem !important;
-        align-items: center !important;
-        flex: 1 !important;
-        justify-content: center !important;
-    }
-    
-    .logo-icon {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 50px !important;
-        height: 50px !important;
-        flex-shrink: 0 !important;
-    }
-    
-    /* ✅✅✅ LOGO TEXT - FORCÉ VISIBLE ✅✅✅ */
-    .logo-text {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        flex-direction: column !important;
-    }
-    
-    .logo-name {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-weight: 700 !important;
-        font-size: 1.05rem !important;
-        letter-spacing: 1px !important;
-        color: white !important;
-    }
-    
-    .logo-tagline {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-size: 0.65rem !important;
-        color: rgba(255, 255, 255, 0.6) !important;
-        letter-spacing: 2px !important;
-    }
-    
-    /* ✅✅✅ USER INFO - FORCÉ VISIBLE ✅✅✅ */
-    .header-user {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        gap: 0.75rem !important;
-        align-items: center !important;
-    }
-    
-    .user-info {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        text-align: right !important;
-    }
-    
-    .user-name {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-weight: 600 !important;
-        font-size: 0.85rem !important;
-        color: white !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 100px !important;
-    }
-    
-    .user-level {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-size: 0.75rem !important;
-        color: rgba(255, 255, 255, 0.6) !important;
-    }
-    
-    /* ✅✅✅ BOUTON LOGOUT - FORCÉ VISIBLE ✅✅✅ */
-    .logout-btn {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        background: var(--deep-blue) !important;
-        border: 1px solid var(--electric-blue) !important;
-        color: white !important;
-        border-radius: 6px !important;
-        padding: 0.5rem 0.75rem !important;
-        cursor: pointer !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 0.4rem !important;
-    }
-    
-    /* Texte logout masqué sur mobile */
-    .logout-text {
-        display: none !important;
-    }
-    
-    /* ✅ ICÔNE LOGOUT - FORCÉ VISIBLE */
-    .logout-icon {
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-size: 1.2rem !important;
-        flex-shrink: 0 !important;
-        color: white !important;
-    }
 }
 
-/* Version 360px - Logo text et user info masqués */
-@media (max-width: 360px) {
-    .logo-text {
-        display: none !important;
-    }
-    
-    .user-info {
-        display: none !important;
-    }
-    
-    .logo-icon {
-        width: 44px !important;
-        height: 44px !important;
-    }
-    
-    /* Logout RESTE visible */
-    .logout-btn {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    .logout-icon {
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-size: 1.15rem !important;
-    }
-}
