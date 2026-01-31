@@ -1901,6 +1901,10 @@ header {
     
     .logout-icon {
         font-size: 1.2rem !important;
+        display: block !important;
+        line-height: 1 !important;
+        visibility: visible !important;
+        color: white !important;
     }
     
     .dropdown-toggle {
@@ -2075,6 +2079,8 @@ header {
         font-size: 1.1rem !important;
         display: block !important;
         line-height: 1 !important;
+        visibility: visible !important;
+        color: white !important;
     }
     
     .dropdown-toggle {
