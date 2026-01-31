@@ -3,7 +3,7 @@
 ## Prérequis
 
 1. **Compte Render** : https://render.com (gratuit avec limitations)
-2. **Clé API OpenAI** : https://platform.openai.com/api-keys
+2. **Clé API Groq** : https://console.groq.com/keys
 3. **Repository GitHub** : Votre code doit être sur GitHub
 4. **Python 3.11+**
 
@@ -47,7 +47,7 @@ git push -u origin main
 4. **Ajouter les variables d'environnement** (Settings → Environment):
 
    ```
-   OPENAI_API_KEY=sk-... (votre clé)
+   GROQ_API_KEY=gsk_... (votre clé)
    DATABASE_URL=postgresql://... (de l'étape 2)
    FLASK_ENV=production
    ```
@@ -130,7 +130,7 @@ Une fois déployée:
 
 | Variable | Valeur | Exemple |
 |----------|--------|---------|
-| `OPENAI_API_KEY` | Clé API OpenAI | `sk-proj-...` |
+| `GROQ_API_KEY` | Clé API Groq | `gsk_...` |
 | `DATABASE_URL` | URL PostgreSQL | `postgresql://...` |
 | `FLASK_ENV` | `production` ou `development` | `production` |
 

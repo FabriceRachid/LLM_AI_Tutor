@@ -1,6 +1,6 @@
 # 🐍 AI Python Tutor
 
-Un tuteur IA complet pour apprendre Python du niveau débutant à expert, alimenté par GPT-4o-mini.
+Un tuteur IA complet pour apprendre Python du niveau débutant à expert, alimenté par Groq (LLaMA 3.3 70B).
 
 ## ✨ Fonctionnalités
 
@@ -15,7 +15,7 @@ Un tuteur IA complet pour apprendre Python du niveau débutant à expert, alimen
 
 ### Prérequis
 - Compte Render (https://render.com)
-- Clé API OpenAI
+- Clé API Groq
 - Base de données PostgreSQL
 
 ### Configuration sur Render
@@ -32,7 +32,7 @@ Un tuteur IA complet pour apprendre Python du niveau débutant à expert, alimen
 
 3. **Variables d'environnement** (Settings → Environment)
    ```
-   OPENAI_API_KEY=sk-...
+   GROQ_API_KEY=gsk_...
    DATABASE_URL=postgresql://...
    FLASK_ENV=production
    ```
@@ -59,7 +59,7 @@ pip install -r requirements.txt
 
 # 2. Configurer .env
 cp .env.example .env
-# Éditer .env avec votre clé OpenAI
+# Éditer .env avec votre clé Groq
 
 # 3. Initialiser la base de données
 python init_db.py
@@ -122,7 +122,7 @@ Puis ouvrir http://localhost:5000
 
 ## 🛠️ Tech Stack
 
-- **Backend:** Flask, SQLAlchemy, OpenAI API
+- **Backend:** Flask, SQLAlchemy, Groq API (LLaMA 3.3)
 - **Frontend:** HTML5, CSS3, JavaScript vanilla
 - **Database:** PostgreSQL (Render) / SQLite (dev)
 - **Deployment:** Render, Gunicorn
@@ -142,6 +142,7 @@ Puis ouvrir http://localhost:5000
 - Variables d'environnement pour secrets
 - Validation des entrées utilisateur
 - Protection des clés API
+- Rate limiting sur les endpoints IA
 
 ## 📈 Améliorations futures
 
