@@ -7,7 +7,7 @@ let currentSession = null;
 let currentExercise = null;
 let isLoading = false;
 let allSessions = [];
-let messageTimestamps = {}; // Stockage des horodatages persistants
+let messageTimestamps = {}; // Stockage des horodatages
 
 // ==========================================
 // INITIALIZATION
@@ -16,7 +16,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadMessageTimestamps();
     await initializeApp();
     setupEventListeners();
+    setupMobileNavigation();
+    setupMobileStatsPanel();
+    setupMobileActions(); // Configurer les boutons de la barre mobile
 });
+
 async function initializeApp() {
     try {
         // Vérifier si l'utilisateur est déjà connecté
@@ -51,6 +55,66 @@ async function initializeApp() {
     }
 }
 
+function setupMobileNavigation() {
+    // Créer les overlays pour les menus mobiles
+    if (!document.getElementById('sidebarOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'sidebarOverlay';
+        overlay.className = 'sidebar-overlay';
+        overlay.onclick = closeMobileMenu;
+        document.body.appendChild(overlay);
+    }
+    
+    if (!document.getElementById('statsOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'statsOverlay';
+        overlay.className = 'sidebar-overlay';
+        overlay.onclick = closeMobileStats;
+        document.body.appendChild(overlay);
+    }
+    
+    // Initialiser les boutons mobiles
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    }
+    
+    const mobileStatsToggle = document.getElementById('mobileStatsToggle');
+    if (mobileStatsToggle) {
+        mobileStatsToggle.addEventListener('click', toggleMobileStats);
+    }
+}
+
+function setupMobileStatsPanel() {
+    const statsToggle = document.getElementById('mobileStatsToggle');
+    const statsPanel = document.getElementById('mobileStatsPanel');
+    
+    if (!statsToggle || !statsPanel) return;
+    
+    // Fermer le panneau stats quand on clique à l'extérieur
+    document.addEventListener('click', (e) => {
+        if (!statsPanel.contains(e.target) && !statsToggle.contains(e.target) && statsPanel.classList.contains('active')) {
+            closeMobileStats();
+        }
+    });
+}
+
+function setupMobileActions() {
+    // Configurer le bouton Changer Niveau mobile
+    const mobileChangeLevelBtn = document.getElementById('mobileChangeLevelBtn');
+    if (mobileChangeLevelBtn) {
+        mobileChangeLevelBtn.addEventListener('click', showChangeLevelModal);
+    }
+    
+    // Configurer le bouton Exercice mobile
+    const mobileExerciseBtn = document.getElementById('mobileExerciseBtn');
+    if (mobileExerciseBtn) {
+        mobileExerciseBtn.addEventListener('click', () => requestExercise());
+    }
+    
+    // Le bouton Réviser utilise déjà onclick dans le HTML
+}
+
 async function createNewUser() {
     const modal = document.getElementById('userModal');
     modal.classList.add('show');
@@ -77,7 +141,7 @@ async function createNewUser() {
             localStorage.setItem('userId', currentUser.id);
             modal.classList.remove('show');
             updateUserDisplay();
-            showToast(`Bienvenue ${username}! `, 'success');
+            showToast(`Bienvenue ${username}! 🎓`, 'success');
         } catch (error) {
             console.error('Erreur:', error);
             showToast('Erreur création utilisateur', 'error');
@@ -96,79 +160,127 @@ function setupEventListeners() {
     document.getElementById('newSessionBtn')?.addEventListener('click', showNewSessionModal);
     document.getElementById('exerciseBtn')?.addEventListener('click', () => requestExercise());
     document.getElementById('changeLevelBtn')?.addEventListener('click', showChangeLevelModal);
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
     
     // User creation event
     document.getElementById('createUserBtn')?.addEventListener('click', createNewUser);
-}
-
-function showLoginForm() {
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('signupForm').style.display = 'none';
-}
-
-function showSignupForm() {
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('signupForm').style.display = 'block';
-}
-
-async function handleLogin() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
     
-    if (!username || !password) {
-        showToast('Veuillez remplir tous les champs', 'error');
-        return;
-    }
-    
-    await loginUser(username, password);
-}
-
-async function handleSignup() {
-    const username = document.getElementById('usernameInput').value.trim();
-    const email = document.getElementById('emailInput').value.trim();
-    
-    if (!username || !email) {
-        showToast('Veuillez remplir tous les champs', 'error');
-        return;
-    }
-    
-    if (username.length < 3) {
-        showToast("Le nom d'utilisateur doit contenir au moins 3 caractères", "error");
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email })
-        });
-        
-        if (response.ok) {
-            const user = await response.json();
-            localStorage.setItem('userId', user.id);
-            currentUser = user;
-            
-            hideLoginModal();
-            await initializeApp();
-            showToast('Compte créé avec succès! ', 'success');
-        } else {
-            const error = await response.json();
-            showToast(error.error || 'Erreur de création', 'error');
+    // Gestion du clic en dehors des menus mobiles
+    document.addEventListener('click', (e) => {
+        // Fermer le menu latéral si on clique en dehors
+        const sidebar = document.getElementById('mobileSidebar');
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        if (sidebar && sidebar.classList.contains('active') && 
+            !sidebar.contains(e.target) && 
+            menuBtn && !menuBtn.contains(e.target)) {
+            closeMobileMenu();
         }
-    } catch (error) {
-        console.error('Erreur signup:', error);
-        showToast('Erreur de réseau', 'error');
+    });
+}
+
+// ==========================================
+// MOBILE MENU FUNCTIONS
+// ==========================================
+
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar && overlay) {
+        const isOpening = !sidebar.classList.contains('active');
+        
+        // Fermer d'abord les autres menus
+        closeMobileStats();
+        
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+        
+        // Empêcher le scroll du body quand le menu est ouvert
+        if (isOpening) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
     }
+}
+
+function closeMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar && overlay) {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function toggleMobileStats() {
+    const statsPanel = document.getElementById('mobileStatsPanel');
+    const overlay = document.getElementById('statsOverlay');
+    
+    if (statsPanel) {
+        const isOpening = !statsPanel.classList.contains('active');
+        
+        // Fermer d'abord le menu latéral
+        closeMobileMenu();
+        
+        statsPanel.classList.toggle('active');
+        
+        if (overlay) {
+            overlay.classList.toggle('active');
+        }
+        
+        // Mettre à jour le bouton mobile
+        const statsBtn = document.getElementById('mobileStatsToggle');
+        if (statsBtn) {
+            if (isOpening) {
+                statsBtn.innerHTML = '<span class="stats-toggle-icon">▼</span><span class="stats-toggle-text">Réduire</span>';
+                statsBtn.style.background = 'var(--electric-blue)';
+                document.body.style.overflow = 'hidden';
+            } else {
+                statsBtn.innerHTML = '<span class="stats-toggle-icon">📊</span><span class="stats-toggle-text">Stats & Exercices</span>';
+                statsBtn.style.background = 'var(--deep-blue)';
+                document.body.style.overflow = '';
+            }
+        }
+    }
+}
+
+function closeMobileStats() {
+    const statsPanel = document.getElementById('mobileStatsPanel');
+    const overlay = document.getElementById('statsOverlay');
+    
+    if (statsPanel) {
+        statsPanel.classList.remove('active');
+    }
+    
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+    
+    // Réinitialiser le bouton toggle
+    const statsBtn = document.getElementById('mobileStatsToggle');
+    if (statsBtn) {
+        statsBtn.innerHTML = '<span class="stats-toggle-icon">📊</span><span class="stats-toggle-text">Stats & Exercices</span>';
+        statsBtn.style.background = 'var(--deep-blue)';
+    }
+    
+    document.body.style.overflow = '';
 }
 
 function updateUserDisplay() {
     if (!currentUser) return;
     
+    // Version desktop/tablette
     document.getElementById('userName').textContent = currentUser.username;
     document.getElementById('userLevel').textContent = `Niveau: ${translateLevel(currentUser.current_level)}`;
     document.getElementById('levelBadge').textContent = translateLevel(currentUser.current_level).toUpperCase();
+    
+    // Version mobile
+    const userNameMobile = document.getElementById('userNameMobile');
+    if (userNameMobile) {
+        userNameMobile.textContent = currentUser.username;
+    }
     
     loadUserStats();
 }
@@ -187,12 +299,27 @@ async function loadUserStats() {
         const response = await fetch(`${API_URL}/users/${currentUser.id}/exercises`);
         if (response.ok) {
             const data = await response.json();
-            document.getElementById('totalExercises').textContent = data.total_exercises;
-            document.getElementById('successRate').textContent = Math.round(data.success_rate) + '%';
-            document.getElementById('streak').textContent = calculateStreak(data.exercises);
+            
+            // ✅ CORRECTION: Récupérer les valeurs directement de la réponse
+            const totalExercises = data.total_exercises || 0;
+            const successRate = data.success_rate || 0;
+            const streak = data.streak || 0;
+            
+            // ✅ CORRECTION: Mettre à jour l'affichage avec les bonnes valeurs
+            document.getElementById('totalExercises').textContent = totalExercises;
+            document.getElementById('successRate').textContent = Math.round(successRate) + '%';
+            document.getElementById('streak').textContent = streak;
+            
+            console.log('Stats chargées:', { totalExercises, successRate, streak });
+        } else {
+            throw new Error(`HTTP ${response.status}`);
         }
     } catch (error) {
         console.error('Erreur stats:', error);
+        // Afficher des valeurs par défaut en cas d'erreur
+        document.getElementById('totalExercises').textContent = '0';
+        document.getElementById('successRate').textContent = '0%';
+        document.getElementById('streak').textContent = '0';
     }
 }
 
@@ -221,9 +348,6 @@ async function loadUserSessions() {
     }
 }
 
-
-// Remplacer la fonction displaySessions() par celle-ci :
-
 function displaySessions() {
     const sidebar = document.getElementById('sessionsList');
     sidebar.innerHTML = '';
@@ -237,7 +361,6 @@ function displaySessions() {
         const sessionEl = document.createElement('div');
         sessionEl.className = `session-item ${currentSession?.id === session.id ? 'active' : ''}`;
         
-        // ✨ STRUCTURE SIMPLIFIÉE ET CORRECTE
         sessionEl.innerHTML = `
             <div class="session-content">
                 <div class="session-topic">${session.topic || 'Chat général'}</div>
@@ -259,7 +382,12 @@ function displaySessions() {
         const contentDiv = sessionEl.querySelector('.session-content');
         const deleteBtn = sessionEl.querySelector('.delete-session-btn');
         
-        contentDiv.addEventListener('click', () => loadSession(session.id));
+        contentDiv.addEventListener('click', () => {
+            loadSession(session.id);
+            // Fermer le menu mobile après sélection
+            closeMobileMenu();
+        });
+        
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteSession(session.id);
@@ -288,25 +416,70 @@ function displayChatMessages() {
     const container = document.getElementById('messagesContainer');
     container.innerHTML = '';
     
-    if (!currentSession.messages || currentSession.messages.length === 0) {
-        container.innerHTML = `
-            <div class="welcome-message">
-                <div class="welcome-title">📚 ${currentSession.topic || 'Chat'}</div>
-                <div class="welcome-subtitle">Posez vos questions sur ${currentSession.topic || 'Python'}!</div>
+    // Supprimer d'abord tout contenu existant
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+    
+    // Vérifier s'il y a une session active et des messages
+    const hasSession = currentSession && currentSession.id;
+    const hasMessages = currentSession?.messages?.length > 0;
+    
+    if (!hasSession || !hasMessages) {
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'welcome-message';
+        welcomeDiv.innerHTML = `
+            <div class="welcome-avatar" id="reload-welcome-avatar"></div>
+            <div class="welcome-title" style="animation: gentlePulse 4s ease-in-out infinite;">
+                👋 ${currentSession?.topic ? currentSession.topic : 'Bonjour ! Je suis AI Tutor'}
             </div>
+            <div class="welcome-subtitle">
+                ${currentSession?.topic 
+                    ? `Posez vos questions sur ${currentSession.topic}!` 
+                    : 'Votre assistant virtuel intelligent pour apprendre Python'}
+            </div>
+            ${!currentSession?.topic ? `
+                <div class="ai-presentation">
+                    <p>🤖 <strong>Je suis là pour vous aider à maîtriser Python !</strong></p>
+                    <ul>
+                        <li>  Posez-moi vos questions en Python</li>
+                        <li>  Entraînez-vous avec des exercices adaptés à votre niveau</li>
+                        <li>  Suivez votre progression en temps réel</li>
+                        <li>  Je parle plusieurs langues : Français, English, Español, Deutsch...</li>
+                    </ul>
+                    <p style="margin-top: 1rem;">
+                        <strong>Pour commencer :</strong> Créez une nouvelle session ou posez-moi directement une question !
+                    </p>
+                </div>
+            ` : ''}
         `;
         container.appendChild(welcomeDiv);
+        
+        // Ajouter l'animation Lottie au welcome avatar
+        setTimeout(() => {
+            const reloadAvatar = document.getElementById('reload-welcome-avatar');
+            if (reloadAvatar && typeof bodymovin !== 'undefined') {
+                bodymovin.loadAnimation({
+                    container: reloadAvatar,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'Live chatbot.json',
+                    speed: 0.8 // Ralentir l'animation
+                });
+            }
+        }, 100);
+        
         return;
     }
     
+    // Afficher les messages existants avec horodatages du serveur
     currentSession.messages.forEach(msg => {
         if (msg.created_at) {
-            // Convertir l'horodatage ISO en format lisible
             const date = new Date(msg.created_at);
             const displayTime = date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
             displayMessageWithTimestamp(msg.content, msg.role, displayTime);
         } else {
-            // Fallback si pas d'horodatage (pour les anciens messages)
             addMessageToUI(msg.content, msg.role);
         }
     });
@@ -320,6 +493,10 @@ function displayChatMessages() {
 // ==========================================
 
 function showNewSessionModal() {
+    // Fermer les menus mobiles
+    closeMobileMenu();
+    closeMobileStats();
+    
     const modal = document.getElementById('newSessionModal');
     modal.classList.add('show');
     document.getElementById('topicInput').value = '';
@@ -353,7 +530,7 @@ async function createNewSession(topic) {
         await loadUserSessions();
         displayChatMessages();
         
-        showToast(`Nouvelle session: ${topic} ✨`, 'success');
+        showToast(`Nouvelle session: ${topic} `, 'success');
     } catch (error) {
         console.error('Erreur:', error);
         showToast('Erreur création session', 'error');
@@ -426,10 +603,39 @@ async function deleteSession(sessionId) {
             currentSession = null;
             document.getElementById('messagesContainer').innerHTML = `
                 <div class="welcome-message">
-                    <div class="welcome-title"> Bienvenue</div>
-                    <div class="welcome-subtitle">Créez une nouvelle session pour commencer</div>
+                    <div class="welcome-avatar" id="delete-welcome-avatar"></div>
+                    <div class="welcome-title">👋 Bonjour ! Je suis AI Tutor</div>
+                    <div class="welcome-subtitle">Votre assistant virtuel intelligent pour apprendre Python</div>
+                    <div class="ai-presentation">
+                        <p>🤖 <strong>Je suis là pour vous aider à maîtriser Python !</strong></p>
+                        <ul>
+                            <li>  Posez-moi vos questions en Python</li>
+                            <li>  Entraînez-vous avec des exercices adaptés à votre niveau</li>
+                            <li>  Suivez votre progression en temps réel</li>
+                            <li>  Je parle plusieurs langues : Français, English, Español, Deutsch...</li>
+                        </ul>
+                        <p style="margin-top: 1rem;">
+                            <strong>Pour commencer :</strong> Créez une nouvelle session ou posez-moi directement une question !
+                        </p>
+                    </div>
                 </div>
             `;
+            
+            // Ajouter l'animation au nouvel avatar
+            setTimeout(() => {
+                const deleteAvatar = document.getElementById('delete-welcome-avatar');
+                if (deleteAvatar && typeof bodymovin !== 'undefined') {
+                    bodymovin.loadAnimation({
+                        container: deleteAvatar,
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        path: 'Live chatbot.json',
+                        speed: 0.8
+                    });
+                }
+            }, 100);
+            
             document.getElementById('currentTopic').textContent = 'Bienvenue';
         }
         
@@ -474,6 +680,11 @@ async function sendMessage() {
     addMessageToUI(message, 'user');
     input.value = '';
     input.style.height = 'auto';
+    
+    // ✅ FORCER un délai minimum pour l'indicateur
+    const typingStartTime = Date.now();
+    const MIN_TYPING_TIME = 1000; // 1 seconde minimum
+    
     showTypingIndicator();
     
     try {
@@ -495,16 +706,21 @@ async function sendMessage() {
         }
         
         const data = await response.json();
+        
+        // ✅ CALCULER le temps restant pour atteindre 1 seconde
+        const elapsedTime = Date.now() - typingStartTime;
+        const remainingTime = Math.max(0, MIN_TYPING_TIME - elapsedTime);
+        
+        // ✅ ATTENDRE si nécessaire avant de masquer l'indicateur
+        if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+        
         removeTypingIndicator();
         
         if (data.assistant_message && data.assistant_message.content) {
-            // Utiliser les horodatages du serveur pour afficher les messages
-            if (data.user_message && data.user_message.created_at) {
-                const userDate = new Date(data.user_message.created_at);
-                const userDisplayTime = userDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
-                displayMessageWithTimestamp(data.user_message.content, 'user', userDisplayTime);
-            }
-            if (data.assistant_message && data.assistant_message.created_at) {
+            // Utiliser les horodatages du serveur
+            if (data.assistant_message.created_at) {
                 const aiDate = new Date(data.assistant_message.created_at);
                 const aiDisplayTime = aiDate.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
                 displayMessageWithTimestamp(data.assistant_message.content, 'assistant', aiDisplayTime);
@@ -519,6 +735,15 @@ async function sendMessage() {
         await loadSession(currentSession.id);
     } catch (error) {
         console.error('Erreur:', error);
+        
+        // ✅ S'assurer que l'indicateur est masqué même en cas d'erreur
+        const elapsedTime = Date.now() - typingStartTime;
+        const remainingTime = Math.max(0, MIN_TYPING_TIME - elapsedTime);
+        
+        if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+        
         removeTypingIndicator();
         
         // Network error or server error
@@ -553,8 +778,10 @@ function addMessageToUI(content, role) {
     const timestamp = new Date();
     const displayTime = timestamp.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
     
+    const avatarId = 'avatar-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    
     messageDiv.innerHTML = `
-        <div class="message-avatar" id="avatar-${Date.now()}"></div>
+        <div class="message-avatar" id="${avatarId}"></div>
         <div class="message-content-wrapper">
             <div class="message-header">
                 <span class="message-name">${name}</span>
@@ -567,27 +794,29 @@ function addMessageToUI(content, role) {
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
     
-    // Ajouter l'animation Lottie pour l'avatar
-    const avatarId = messageDiv.querySelector('.message-avatar').id;
+    // Ajouter l'animation Lottie pour l'avatar de l'assistant
     if (role === 'assistant') {
         setTimeout(() => {
-            bodymovin.loadAnimation({
-                container: document.getElementById(avatarId),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'Live chatbot.json',
-                rendererSettings: {
-                    preserveAspectRatio: 'xMidYMid meet'
-                }
-            });
+            const avatarElement = document.getElementById(avatarId);
+            if (avatarElement && typeof bodymovin !== 'undefined') {
+                bodymovin.loadAnimation({
+                    container: avatarElement,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'Live chatbot.json',
+                    speed: 0.8,
+                    rendererSettings: {
+                        preserveAspectRatio: 'xMidYMid meet'
+                    }
+                });
+            }
         }, 100);
     } else {
+        // Pour l'utilisateur, afficher un emoji simple
         document.getElementById(avatarId).textContent = '👤';
     }
 }
-
-// Remplacer aussi la fonction formatMessage() :
 
 function formatMessage(content) {
     if (!content) return '';
@@ -625,7 +854,7 @@ function formatMessage(content) {
     return content;
 }
 
-// Fonction pour afficher un message avec un horodatage spécifique
+// Fonction pour afficher un message avec un horodatage spécifique (depuis le serveur)
 function displayMessageWithTimestamp(content, role, displayTime) {
     const container = document.getElementById('messagesContainer');
     
@@ -637,9 +866,10 @@ function displayMessageWithTimestamp(content, role, displayTime) {
     messageDiv.className = `message ${role}`;
     
     const name = role === 'user' ? currentUser.username : 'Tuteur IA';
+    const avatarId = 'avatar-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     
     messageDiv.innerHTML = `
-        <div class="message-avatar" id="display-avatar-${Date.now()}"></div>
+        <div class="message-avatar" id="${avatarId}"></div>
         <div class="message-content-wrapper">
             <div class="message-header">
                 <span class="message-name">${name}</span>
@@ -653,25 +883,29 @@ function displayMessageWithTimestamp(content, role, displayTime) {
     container.scrollTop = container.scrollHeight;
     
     // Ajouter l'animation Lottie pour l'avatar
-    const avatarId = messageDiv.querySelector('.message-avatar').id;
     if (role === 'assistant') {
         setTimeout(() => {
-            bodymovin.loadAnimation({
-                container: document.getElementById(avatarId),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'Live chatbot.json',
-                rendererSettings: {
-                    preserveAspectRatio: 'xMidYMid meet'
-                }
-            });
+            const avatarElement = document.getElementById(avatarId);
+            if (avatarElement && typeof bodymovin !== 'undefined') {
+                bodymovin.loadAnimation({
+                    container: avatarElement,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'Live chatbot.json',
+                    speed: 0.8,
+                    rendererSettings: {
+                        preserveAspectRatio: 'xMidYMid meet'
+                    }
+                });
+            }
         }, 100);
     } else {
         document.getElementById(avatarId).textContent = '👤';
     }
 }
 
+// ✅ CORRECTION: Amélioration de l'indicateur de frappe
 function showTypingIndicator() {
     const container = document.getElementById('messagesContainer');
     const typingDiv = document.createElement('div');
@@ -703,13 +937,41 @@ function showTypingIndicator() {
             </div>
         </div>
     `;
+    
     container.appendChild(typingDiv);
     container.scrollTop = container.scrollHeight;
+    
+    // Ajouter l'animation Lottie à l'avatar du typing indicator
+    setTimeout(() => {
+        const avatar = typingDiv.querySelector('.message-avatar');
+        if (avatar && typeof bodymovin !== 'undefined') {
+            bodymovin.loadAnimation({
+                container: avatar,
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'Live chatbot.json',
+                speed: 0.6, // Encore plus lent pour l'indicateur
+                rendererSettings: {
+                    preserveAspectRatio: 'xMidYMid meet'
+                }
+            });
+        }
+    }, 100);
 }
 
 function removeTypingIndicator() {
     const typing = document.getElementById('typingIndicator');
-    if (typing) typing.remove();
+    if (typing) {
+        // Animation de disparition
+        typing.style.opacity = '0';
+        typing.style.transform = 'translateY(10px)';
+        typing.style.transition = 'all 0.3s ease';
+        
+        setTimeout(() => {
+            typing.remove();
+        }, 300);
+    }
 }
 
 // ==========================================
@@ -718,11 +980,14 @@ function removeTypingIndicator() {
 
 async function requestExercise(topic = null) {
     if (!currentUser) {
-        showToast('Créez un utilisateur d\'abord', 'error');
+        showToast('Connectez-vous d\'abord', 'error');
         return;
     }
 
     try {
+        // Fermer le panneau stats mobile si ouvert
+        closeMobileStats();
+        
         isLoading = true;
         showToast('Génération d\'exercice en cours...', 'success');
         
@@ -750,12 +1015,6 @@ async function requestExercise(topic = null) {
     }
 }
 
-// ==========================================
-// MISE À JOUR : Affichage des scores dans submitExercise
-// ==========================================
-
-// Remplacer la fonction submitExercise existante par celle-ci :
-
 async function submitExercise() {
     const code = document.getElementById('codeEditor').value;
     
@@ -776,91 +1035,265 @@ async function submitExercise() {
             },
             body: JSON.stringify({ 
                 code: code,
-                user_id: currentUser.id  // AJOUTEZ ceci si nécessaire
+                user_id: currentUser.id
             })
         });
         
         const data = await response.json();
         
         if (!response.ok) {
-            // Erreur du serveur avec message
             throw new Error(data.error || `Erreur ${response.status}: ${response.statusText}`);
         }
         
-        // ✨ Afficher le résultat
         displayExerciseResults(data);
         
-        // Mettre à jour les stats utilisateur
+        // ✅ CORRECTION: Mettre à jour les stats directement
         if (data.user_stats) {
             currentUser = { ...currentUser, ...data.user_stats };
+            
+            // ✅ CORRECTION: Mettre à jour les éléments DOM directement
+            const totalExercises = data.user_stats.total_exercises || 0;
+            const successRate = data.user_stats.success_rate || 0;
+            const streak = data.user_stats.streak || 0;
+            
+            document.getElementById('totalExercises').textContent = totalExercises;
+            document.getElementById('successRate').textContent = Math.round(successRate) + '%';
+            document.getElementById('streak').textContent = streak;
+            
+            console.log('Stats mises à jour:', { totalExercises, successRate, streak });
+            
             updateUserDisplay();
+        } else {
+            console.warn('user_stats non trouvé dans la réponse, rechargement manuel');
+            loadUserStats();
         }
         
-        showToast(data.is_correct ? 'Excellent! 🎉' : 'Continue tes efforts! 💪', 'success');
+        showToast(data.is_correct ? 'Excellent! ' : 'Continue tes efforts! ', 'success');
         
     } catch (error) {
         console.error('Erreur détaillée:', error);
+        showToast('Erreur lors de la soumission', 'error');
         
-        // Message d'erreur plus informatif
-        let errorMessage = error.message;
-        
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            errorMessage = 'Erreur réseau - Vérifiez que le serveur est démarré';
-        } else if (error.message.includes('404')) {
-            errorMessage = 'Exercice non trouvé - Rechargez la page';
-        } else if (error.message.includes('500')) {
-            errorMessage = 'Erreur serveur - Contactez l\'administrateur';
-        }
-        
-        showToast(`Erreur: ${errorMessage}`, 'error');
-        
-        // Afficher l'erreur dans la zone de résultats
+        // Afficher l'erreur dans la correction
         const correctionDiv = document.getElementById('correctionResult');
         correctionDiv.innerHTML = `
-            <div style="
+            <div class="error-message" style="
                 padding: 1.5rem;
                 background: rgba(255, 51, 102, 0.1);
-                border: 2px solid var(--error-red);
+                border: 1px solid var(--error-red);
                 border-radius: 8px;
-                color: var(--text-primary);
+                color: var(--error-red);
             ">
-                <h3 style="color: var(--error-red); margin-bottom: 1rem;">❌ Erreur de soumission</h3>
-                <p><strong>Détails :</strong> ${errorMessage}</p>
-                <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
-                    Vérifiez que votre serveur Flask est démarré et que la base de données est accessible.
-                </p>
-            </div>
-        `;
-        
-        currentUser = { ...currentUser, ...result.user_stats };
-        updateUserDisplay();
-        showToast(result.is_correct ? 'Excellent! 🎉' : 'Continue tes efforts! 💪', 'success');
-    } catch (error) {
-        console.error('Erreur:', error);
-        
-        // Network error or server error
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            showToast('Erreur réseau - vérifiez votre connexion', 'error');
-        } else {
-            showToast(`Erreur: ${error.message}`, 'error');
-        }
-        
-        // Show error in correction area
-        const correctionDiv = document.getElementById('correctionResult');
-        correctionDiv.innerHTML = `
-            <div style="margin-top: 1rem; padding: 1rem; border-radius: 8px; 
-                        background: rgba(255, 51, 102, 0.1)
-                        border: 2px solid #ff3366">
-                <h3>❌ Erreur de soumission</h3>
+                <h3 style="margin-bottom: 1rem;">❌ Erreur d'évaluation</h3>
                 <p>${error.message}</p>
                 <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
-                    Veuillez réessayer plus tard.
+                    Vérifiez votre connexion et réessayez.
                 </p>
             </div>
         `;
     } finally {
         isLoading = false;
+        const sendBtn = document.getElementById('sendBtn');
+        if (sendBtn) sendBtn.classList.remove('sending');
+        document.getElementById('messageInput').focus();
     }
+}
+
+function displayExerciseResults(result) {
+    const correctionDiv = document.getElementById('correctionResult');
+    
+    const detailed = result.detailed_scores || { syntax: 0, logic: 0, best_practices: 0, efficiency: 0 };
+    const report = result.report || {};
+    const score = result.score || 0;
+    
+    // ✨ Couleurs selon le score
+    let gradientColors = '';
+    if (score >= 90) {
+        gradientColors = 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)';
+    } else if (score >= 70) {
+        gradientColors = 'linear-gradient(135deg, #0066ff 0%, #00d4ff 100%)';
+    } else if (score >= 50) {
+        gradientColors = 'linear-gradient(135deg, #00d4ff 0%, #00fff9 100%)';
+    } else {
+        gradientColors = 'linear-gradient(135deg, #9d4edd 0%, #ff3366 100%)';
+    }
+    
+    correctionDiv.innerHTML = `
+        <div class="exercise-results">
+            <!-- En-tête avec score -->
+            <div class="results-header" style="
+                background: ${gradientColors};
+                padding: 2rem;
+                border-radius: 12px;
+                text-align: center;
+                color: white;
+                margin-bottom: 1.5rem;
+                box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            ">
+                <div style="font-size: 3rem; font-weight: bold; margin-bottom: 0.5rem;">
+                    ${score}/100
+                </div>
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">
+                    ${result.grade_letter || 'N/A'}
+                </div>
+                <div style="font-size: 1rem; opacity: 0.9;">
+                    Niveau: ${result.mastery_level || 'N/A'}
+                </div>
+            </div>
+            
+            <!-- Scores détaillés -->
+            <div class="detailed-scores" style="margin-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary);"> Scores Détaillés</h3>
+                
+                <div class="score-bar" style="margin-bottom: 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <span>Syntaxe</span>
+                        <span>${detailed.syntax || 0}/25</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="background: var(--electric-blue); height: 100%; width: ${(detailed.syntax || 0) * 4}%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <div class="score-bar" style="margin-bottom: 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <span>Logique</span>
+                        <span>${detailed.logic || 0}/25</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="background: var(--accent-cyan); height: 100%; width: ${(detailed.logic || 0) * 4}%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <div class="score-bar" style="margin-bottom: 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <span>Bonnes Pratiques</span>
+                        <span>${detailed.best_practices || 0}/25</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="background: var(--success-green); height: 100%; width: ${(detailed.best_practices || 0) * 4}%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <div class="score-bar">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <span>Efficacité</span>
+                        <span>${detailed.efficiency || 0}/25</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="background: var(--accent-purple); height: 100%; width: ${(detailed.efficiency || 0) * 4}%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Points forts -->
+            ${report.strengths && report.strengths.length > 0 ? `
+            <div class="report-section" style="
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background: rgba(0, 255, 136, 0.05);
+                border-left: 4px solid var(--success-green);
+                border-radius: 8px;
+            ">
+                <h3 style="margin-bottom: 0.8rem; color: var(--success-green);"> Points Forts</h3>
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                    ${report.strengths.map(s => `<li style="margin-bottom: 0.5rem;">${s}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+            
+            <!-- Points à améliorer -->
+            ${report.weaknesses && report.weaknesses.length > 0 ? `
+            <div class="report-section" style="
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background: rgba(255, 51, 102, 0.05);
+                border-left: 4px solid var(--error-red);
+                border-radius: 8px;
+            ">
+                <h3 style="margin-bottom: 0.8rem; color: var(--error-red);"> Points à Améliorer</h3>
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                    ${report.weaknesses.map(w => `<li style="margin-bottom: 0.5rem;">${w}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+            
+            <!-- Suggestions -->
+            ${report.suggestions && report.suggestions.length > 0 ? `
+            <div class="report-section" style="
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background: rgba(0, 212, 255, 0.05);
+                border-left: 4px solid var(--electric-blue);
+                border-radius: 8px;
+            ">
+                <h3 style="margin-bottom: 0.8rem; color: var(--electric-blue);"> Suggestions</h3>
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                    ${report.suggestions.map(s => `<li style="margin-bottom: 0.5rem;">${s}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+            
+            <!-- Correction proposée -->
+            ${report.model_correction ? `
+            <div class="report-section" style="
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background: rgba(0, 212, 255, 0.1);
+                border-left: 4px solid var(--electric-blue);
+                border-radius: 8px;
+            ">
+                <h3 style="margin-bottom: 0.8rem; color: var(--electric-blue);">✏️ Correction Proposée</h3>
+                <pre style="
+                    background: var(--primary-black);
+                    padding: 1rem;
+                    border-radius: 6px;
+                    overflow-x: auto;
+                    color: var(--text-primary);
+                    font-size: 0.9rem;
+                    line-height: 1.4;
+                    margin: 0;
+                "><code>${report.model_correction}</code></pre>
+                <p style="margin-top: 1rem; margin-bottom: 0; font-size: 0.9rem; color: var(--text-secondary);">
+                     Cette correction est une proposition. Votre solution peut être tout aussi valide si elle respecte les exigences du problème.
+                </p>
+            </div>
+            ` : ''}
+
+            <!-- Feedback détaillé -->
+            ${report.detailed_feedback ? `
+            <div class="report-section" style="
+                padding: 1rem;
+                background: var(--bg-secondary);
+                border-radius: 8px;
+                margin-bottom: 1rem;
+            ">
+                <h3 style="margin-bottom: 0.8rem; color: var(--text-primary);"> Feedback Détaillé</h3>
+                <p style="line-height: 1.6; margin: 0;">${formatMessage(report.detailed_feedback)}</p>
+            </div>
+            ` : ''}
+            
+            <!-- Stats -->
+            <div style="
+                padding: 1rem;
+                background: var(--bg-card);
+                border-radius: 8px;
+                text-align: center;
+                font-size: 0.9rem;
+                color: var(--text-muted);
+            ">
+                <p style="margin: 0;">
+                    Tentative n°${result.attempt_number || 1} • 
+                    Taux de réussite global: ${result.user_stats?.success_rate?.toFixed(1) || 0}%
+                </p>
+            </div>
+        </div>
+    `;
+    
+    // ✨ Scroll automatique vers les résultats
+    setTimeout(() => {
+        correctionDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
 }
 
 function closeExerciseModal() {
@@ -868,10 +1301,338 @@ function closeExerciseModal() {
 }
 
 // ==========================================
+// SYSTÈME DE RÉVISION DES EXERCICES
+// ==========================================
+
+async function showExerciseHistory() {
+    if (!currentUser) {
+        showToast('Connectez-vous d\'abord', 'error');
+        return;
+    }
+
+    try {
+        // Fermer le panneau stats mobile si ouvert
+        closeMobileStats();
+        
+        const response = await fetch(`${API_URL}/users/${currentUser.id}/exercises`);
+        if (!response.ok) throw new Error('Erreur chargement exercices');
+        
+        const data = await response.json();
+        
+        // Créer le modal d'historique
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.id = 'historyModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 1000px; max-height: 90vh;">
+                <div class="modal-header">
+                    <h2 class="modal-title"> Mes Exercices Résolus</h2>
+                    <button class="close-modal" onclick="closeHistoryModal()">✕</button>
+                </div>
+                
+                <div style="padding: 2rem; overflow-y: auto; max-height: calc(90vh - 120px);">
+                    ${data.exercises.length === 0 ? `
+                        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                            <p>Vous n'avez pas encore résolu d'exercices</p>
+                            <button class="btn btn-primary" onclick="closeHistoryModal(); requestExercise();" style="margin-top: 1.5rem;">
+                                Commencer un exercice
+                            </button>
+                        </div>
+                    ` : `
+                        <div style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; text-align: center;">
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold; color: var(--electric-blue);">
+                                        ${data.total_exercises}
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: var(--text-muted);">Total</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold; color: var(--success-green);">
+                                        ${data.exercises_correct}
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: var(--text-muted);">Réussis</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold; color: var(--accent-cyan);">
+                                        ${data.success_rate.toFixed(1)}%
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: var(--text-muted);">Taux</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="exercises-grid">
+                            ${data.exercises.map(exercise => `
+                                <div class="exercise-card" style="
+                                    background: var(--bg-card);
+                                    border: 1px solid var(--border-color);
+                                    border-radius: 8px;
+                                    padding: 1.5rem;
+                                    margin-bottom: 1rem;
+                                    transition: all 0.3s;
+                                    cursor: pointer;
+                                " onclick="viewExerciseDetail(${exercise.id})">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                        <div style="flex: 1;">
+                                            <h3 style="color: var(--electric-blue); margin-bottom: 0.5rem; font-size: 1.1rem;">
+                                                ${exercise.topic}
+                                            </h3>
+                                            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                                ${new Date(exercise.submitted_at || exercise.created_at).toLocaleDateString('fr-FR', {
+                                                    day: 'numeric',
+                                                    month: 'long',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            ${exercise.score !== undefined ? `
+                                                <div style="
+                                                    background: ${exercise.score >= 70 ? 'var(--success-green)' : 'var(--warning-yellow)'};
+                                                    color: var(--primary-black);
+                                                    padding: 0.5rem 1rem;
+                                                    border-radius: 20px;
+                                                    font-weight: bold;
+                                                    font-size: 1rem;
+                                                ">
+                                                    ${exercise.score}/100
+                                                </div>
+                                            ` : ''}
+                                            <div style="font-size: 1.5rem;">
+                                                ${exercise.is_correct ? '✅' : '❌'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="
+                                        display: inline-block;
+                                        padding: 0.3rem 0.8rem;
+                                        background: rgba(0, 212, 255, 0.1);
+                                        border: 1px solid var(--electric-blue);
+                                        border-radius: 20px;
+                                        font-size: 0.8rem;
+                                        color: var(--electric-blue);
+                                    ">
+                                        ${exercise.level === 'beginner' ? ' Débutant' : 
+                                          exercise.level === 'intermediate' ? ' Intermédiaire' : ' Expert'}
+                                    </div>
+                                    
+                                    <div style="
+                                        margin-top: 1rem;
+                                        padding-top: 1rem;
+                                        border-top: 1px solid var(--border-color);
+                                        font-size: 0.9rem;
+                                        color: var(--text-secondary);
+                                    ">
+                                        Cliquez pour voir le détail et la correction
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Ajouter l'effet hover
+        const cards = modal.querySelectorAll('.exercise-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.background = 'rgba(0, 212, 255, 0.05)';
+                card.style.borderColor = 'var(--electric-blue)';
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.background = 'var(--bg-card)';
+                card.style.borderColor = 'var(--border-color)';
+                card.style.transform = 'translateY(0)';
+            });
+        });
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast('Erreur chargement historique', 'error');
+    }
+}
+
+async function viewExerciseDetail(exerciseId) {
+    try {
+        const response = await fetch(`${API_URL}/exercises/${exerciseId}`);
+        if (!response.ok) throw new Error('Erreur chargement exercice');
+        
+        const exercise = await response.json();
+        
+        // Fermer le modal d'historique
+        closeHistoryModal();
+        
+        // Créer le modal de détail
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.id = 'detailModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 1200px; max-height: 95vh;">
+                <div class="modal-header">
+                    <h2 class="modal-title"> Révision - ${exercise.topic}</h2>
+                    <button class="close-modal" onclick="closeDetailModal()">✕</button>
+                </div>
+                
+                <div style="padding: 2rem; overflow-y: auto; max-height: calc(95vh - 120px);">
+                    <!-- Score -->
+                    ${exercise.score !== undefined ? `
+                        <div style="
+                            background: linear-gradient(135deg, 
+                                ${exercise.score >= 90 ? '#00ff88 0%, #00d4ff 100%' :
+                                  exercise.score >= 70 ? '#0066ff 0%, #00d4ff 100%' :
+                                  exercise.score >= 50 ? '#00d4ff 0%, #00fff9 100%' :
+                                  '#9d4edd 0%, #ff3366 100%'});
+                            padding: 2rem;
+                            border-radius: 12px;
+                            text-align: center;
+                            color: white;
+                            margin-bottom: 2rem;
+                        ">
+                            <div style="font-size: 3rem; font-weight: bold;">${exercise.score}/100</div>
+                            <div style="font-size: 1.2rem; opacity: 0.9;">
+                                ${exercise.grade_letter || 'N/A'} - ${exercise.mastery_level || 'N/A'}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Énoncé -->
+                    <div style="
+                        background: var(--bg-secondary);
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        margin-bottom: 1.5rem;
+                        border-left: 4px solid var(--electric-blue);
+                    ">
+                        <h3 style="color: var(--electric-blue); margin-bottom: 1rem;">  Énoncé</h3>
+                        <div style="line-height: 1.6;">${formatMessage(exercise.exercise_text)}</div>
+                    </div>
+                    
+                    <!-- Votre code -->
+                    ${exercise.student_code ? `
+                        <div style="
+                            background: var(--bg-secondary);
+                            padding: 1.5rem;
+                            border-radius: 8px;
+                            margin-bottom: 1.5rem;
+                            border-left: 4px solid var(--accent-cyan);
+                        ">
+                            <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;"> Votre Code</h3>
+                            <pre style="
+                                background: var(--primary-black);
+                                padding: 1rem;
+                                border-radius: 6px;
+                                overflow-x: auto;
+                            "><code>${exercise.student_code}</code></pre>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Correction -->
+                    ${exercise.correction ? `
+                        <div style="
+                            background: var(--bg-secondary);
+                            padding: 1.5rem;
+                            border-radius: 8px;
+                            margin-bottom: 1.5rem;
+                            border-left: 4px solid var(--success-green);
+                        ">
+                            <h3 style="color: var(--success-green); margin-bottom: 1rem;"> Correction</h3>
+                            <div style="line-height: 1.6; white-space: pre-wrap;">${exercise.correction}</div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Rapport détaillé -->
+                    ${exercise.report ? `
+                        <div style="
+                            background: var(--bg-secondary);
+                            padding: 1.5rem;
+                            border-radius: 8px;
+                            border-left: 4px solid var(--accent-purple);
+                        ">
+                            <h3 style="color: var(--accent-purple); margin-bottom: 1rem;">  Rapport Détaillé</h3>
+                            
+                            ${exercise.report.strengths && exercise.report.strengths.length > 0 ? `
+                                <div style="margin-bottom: 1rem;">
+                                    <h4 style="color: var(--success-green);"> Points Forts</h4>
+                                    <ul style="padding-left: 1.5rem;">
+                                        ${exercise.report.strengths.map(s => `<li>${s}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            
+                            ${exercise.report.weaknesses && exercise.report.weaknesses.length > 0 ? `
+                                <div style="margin-bottom: 1rem;">
+                                    <h4 style="color: var(--error-red);">  Points à Améliorer</h4>
+                                    <ul style="padding-left: 1.5rem;">
+                                        ${exercise.report.weaknesses.map(w => `<li>${w}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            
+                            ${exercise.report.suggestions && exercise.report.suggestions.length > 0 ? `
+                                <div>
+                                    <h4 style="color: var(--electric-blue);">  Suggestions</h4>
+                                    <ul style="padding-left: 1.5rem;">
+                                        ${exercise.report.suggestions.map(s => `<li>${s}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div style="
+                    display: flex;
+                    gap: 1rem;
+                    padding: 1.5rem;
+                    border-top: 1px solid var(--border-color);
+                ">
+                    <button class="btn btn-secondary" onclick="closeDetailModal(); showExerciseHistory();" style="flex: 1;">
+                        ← Retour à la liste
+                    </button>
+                    <button class="btn btn-primary" onclick="closeDetailModal(); requestExercise('${exercise.topic}');" style="flex: 1;">
+                          Nouvel exercice sur ce thème
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast('Erreur chargement détail', 'error');
+    }
+}
+
+function closeHistoryModal() {
+    const modal = document.getElementById('historyModal');
+    if (modal) modal.remove();
+}
+
+function closeDetailModal() {
+    const modal = document.getElementById('detailModal');
+    if (modal) modal.remove();
+}
+
+// ==========================================
 // LEVEL MANAGEMENT
 // ==========================================
 
 function showChangeLevelModal() {
+    // Fermer les menus mobiles
+    closeMobileStats();
+    
     const modal = document.getElementById('changeLevelModal');
     modal.classList.add('show');
     
@@ -927,34 +1688,20 @@ function showToast(message, type = 'success') {
 }
 
 function logout() {
-    // Sauvegarder les horodatages
-    localStorage.setItem('messageTimestamps', JSON.stringify(messageTimestamps));
-    
-    // Supprimer les données utilisateur
-    localStorage.removeItem('userId');
-    currentUser = null;
-    currentSession = null;
-    
-    // Appliquer l'état déconnecté
-    document.body.classList.add('logout-state');
-    
-    // Afficher l'overlay de login
-    document.getElementById('logoutOverlay').classList.remove('hidden');
-    
-    // Réinitialiser l'interface
-    document.getElementById('userName').textContent = 'Utilisateur';
-    document.getElementById('userLevel').textContent = 'Niveau: Débutant';
-    document.getElementById('messagesContainer').innerHTML = `
-        <div class="welcome-message">
-            <div class="welcome-title">🎓 Bienvenue sur AI Tutor</div>
-            <div class="welcome-subtitle">Connectez-vous pour commencer à apprendre</div>
-        </div>
-    `;
-    
-    // Vider la liste des sessions
-    document.getElementById('sessionsList').innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Connectez-vous pour voir vos sessions</p>';
-    
-    showToast('Déconnecté avec succès', 'info');
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        // Sauvegarder les horodatages
+        localStorage.setItem('messageTimestamps', JSON.stringify(messageTimestamps));
+        
+        // Supprimer TOUTES les données de session
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Rediriger IMMÉDIATEMENT vers la page de connexion
+        window.location.href = 'login.html';
+        
+        // Empêcher toute exécution supplémentaire
+        return false;
+    }
 }
 
 // Charger les horodatages au démarrage
@@ -978,61 +1725,11 @@ function hideLoginModal() {
     document.getElementById('userModal').classList.remove('show');
 }
 
-// Fonction de login
-async function loginUser(username, password) {
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('userId', data.user_id);
-            currentUser = { id: data.user_id, username: data.username };
-            
-            hideLoginModal();
-            await initializeApp();
-            showToast('Connecté avec succès! ', 'success');
-        } else {
-            const error = await response.json();
-            showToast(error.error || 'Erreur de connexion', 'error');
-        }
-    } catch (error) {
-        console.error('Erreur login:', error);
-        showToast('Erreur de réseau', 'error');
-    }
-}
-
-// Mise à jour de l'initialisation pour vérifier login existant
-async function checkExistingLogin() {
-    const savedUserId = localStorage.getItem('userId');
-    if (savedUserId) {
-        try {
-            const response = await fetch(`${API_URL}/users/${savedUserId}`);
-            if (response.ok) {
-                currentUser = await response.json();
-                await loadUserSessions();
-                updateUserDisplay();
-                return true;
-            }
-        } catch (error) {
-            console.error('Erreur vérification login:', error);
-        }
-    }
-    return false;
-}
-
-// Mise à jour de initializeApp pour inclure la vérification
-async function initializeApp() {
-    const isAlreadyLoggedIn = await checkExistingLogin();
-    if (!isAlreadyLoggedIn) {
-        showLoginModal();
-        return;
-    }
-    
-    await loadUserSessions();
-    updateUserDisplay();
-    showToast('Bienvenue de retour! 👋', 'success');
-}
+// Exposer les fonctions globales
+window.closeExerciseModal = closeExerciseModal;
+window.submitExercise = submitExercise;
+window.showExerciseHistory = showExerciseHistory;
+window.viewExerciseDetail = viewExerciseDetail;
+window.closeHistoryModal = closeHistoryModal;
+window.closeDetailModal = closeDetailModal;
+window.logout = logout;
