@@ -220,18 +220,12 @@ header {
 }
 
 .logout-icon {
-    font-size: 1rem;
+    font-size: 1.2rem;
     flex-shrink: 0;
-    display: block;
-    line-height: 1;
 }
 
 .logout-text {
     flex-shrink: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 70px;
 }
 
 /* =================== DROPDOWN MENU =================== */
@@ -1566,41 +1560,25 @@ header {
     }
     
     .logo-icon {
-        width: 45px;
-        height: 45px;
-        flex-shrink: 0;
+        width: 50px;
+        height: 50px;
     }
     
     .logo-name {
-        font-size: 1rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px;
+        font-size: 1.1rem;
     }
     
     .logo-tagline {
-        font-size: 0.6rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 120px;
+        font-size: 0.65rem;
     }
     
     .user-name {
-        font-size: 0.85rem;
-        max-width: 90px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-size: 0.9rem;
+        max-width: 100px;
     }
     
     .user-level {
-        font-size: 0.7rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px;
+        font-size: 0.75rem;
     }
     
     /* ✅ CORRECTION: Bouton déconnexion mobile */
@@ -1885,30 +1863,21 @@ header {
     }
     
     .logo-icon {
-        width: 40px;
-        height: 40px;
-        flex-shrink: 0;
+        width: 45px;
+        height: 45px;
     }
     
     .logo-name {
-        font-size: 0.9rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 80px;
+        font-size: 1rem;
     }
     
     .logo-tagline {
-        font-size: 0.55rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px;
+        font-size: 0.6rem;
     }
     
     .user-name {
-        max-width: 60px;
-        font-size: 0.75rem;
+        max-width: 80px;
+        font-size: 0.85rem;
     }
     
     .user-level {
@@ -2077,49 +2046,18 @@ header {
     
     .header-user {
         margin-left: auto;
-        flex-shrink: 0;
-        min-width: fit-content;
     }
     
-    /* ✅ BOUTON DÉCONNEXION 100% VISIBLE - FIX CRITIQUE */
+    /* ✅ S'assurer que le bouton logout reste visible */
     .logout-btn {
         display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
-        padding: 0.4rem 0.6rem !important;
-        font-size: 0.8rem !important;
-        min-width: 40px !important;
-        min-height: 40px !important;
-        position: relative !important;
-        z-index: 100 !important;
-        overflow: visible !important;
-        background: var(--deep-blue) !important;
-        border: 1px solid var(--electric-blue) !important;
-        color: white !important;
-    }
-    
-    .logout-btn::before {
-        content: '' !important;
-        position: absolute !important;
-        inset: -2px !important;
-        border: 2px solid transparent !important;
-        border-radius: 8px !important;
-        background: linear-gradient(45deg, var(--electric-blue), var(--deep-blue)) padding-box,
-                    linear-gradient(45deg, var(--electric-blue), var(--accent-cyan)) border-box !important;
-        z-index: -1 !important;
-        opacity: 0 !important;
-        transition: opacity 0.3s !important;
-    }
-    
-    .logout-btn:hover::before {
-        opacity: 0.3 !important;
+        padding: 0.4rem 0.5rem !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
     }
     
     .logout-icon {
         font-size: 1.1rem !important;
-        display: block !important;
-        line-height: 1 !important;
     }
     
     .dropdown-toggle {
