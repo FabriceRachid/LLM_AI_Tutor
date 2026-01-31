@@ -222,6 +222,10 @@ header {
 .logout-icon {
     font-size: 1.2rem;
     flex-shrink: 0;
+    display: block;
+    visibility: visible;
+    color: white;
+    line-height: 1;
 }
 
 .logout-text {
@@ -321,6 +325,15 @@ header {
     height: 1px;
     background: var(--border-color);
     margin: 0.25rem 0;
+}
+
+/* FORCE LOGOUT ICON VISIBILITY ON ALL SCREENS */
+.logout-icon {
+    display: block !important;
+    visibility: visible !important;
+    color: white !important;
+    font-size: 1.2rem !important;
+    line-height: 1 !important;
 }
 
 /* =================== MOBILE MENU =================== */
