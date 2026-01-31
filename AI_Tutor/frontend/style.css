@@ -144,7 +144,6 @@ header {
     width: 60px;
     height: 60px;
     position: relative;
-    flex-shrink: 0;
 }
 
 .logo:hover .logo-icon {
@@ -162,7 +161,6 @@ header {
     font-weight: 700;
     font-size: 1.2rem;
     letter-spacing: 1px;
-    color: var(--text-primary);
 }
 
 .logo-tagline {
@@ -190,7 +188,6 @@ header {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 150px;
-    color: var(--text-primary);
 }
 
 .user-level {
@@ -198,45 +195,37 @@ header {
     color: var(--text-muted);
 }
 
-/* ✅ BOUTON DE DÉCONNEXION - VERSION ULTRA-EXPLICITE */
+/* ✅ CORRECTION: Bouton de déconnexion */
 .logout-btn {
-    background: var(--deep-blue) !important;
-    border: 1px solid var(--electric-blue) !important;
-    color: white !important;
-    border-radius: 6px !important;
-    padding: 0.6rem 1rem !important;
-    cursor: pointer !important;
-    transition: all 0.3s !important;
-    font-size: 0.9rem !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.5rem !important;
-    white-space: nowrap !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    background: var(--deep-blue);
+    border: 1px solid var(--electric-blue);
+    color: white;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
 }
 
 .logout-btn:hover {
-    background: var(--electric-blue) !important;
-    box-shadow: var(--glow-blue) !important;
+    background: var(--electric-blue);
+    box-shadow: var(--glow-blue);
 }
 
 .logout-icon {
-    font-size: 1.2rem !important;
-    flex-shrink: 0 !important;
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
 .logout-text {
-    flex-shrink: 0 !important;
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    flex-shrink: 0;
 }
 
 /* =================== DROPDOWN MENU =================== */
@@ -634,7 +623,7 @@ header {
     flex-shrink: 0;
 }
 
-/* MOBILE ACTIONS BAR */
+/* ✅ CORRECTION: MOBILE ACTIONS BAR - Éviter la duplication de texte */
 .mobile-actions-bar {
     display: none;
     flex-direction: row;
@@ -770,7 +759,7 @@ header {
     font-weight: bold;
 }
 
-/* MESSAGES */
+/* =================== MESSAGES =================== */
 .message {
     display: flex;
     gap: 1rem;
@@ -890,6 +879,7 @@ header {
     text-align: left;
 }
 
+/* Blocs de code dans les messages */
 .message-content pre {
     background: var(--bg-secondary) !important;
     border: 1px solid var(--border-color) !important;
@@ -917,7 +907,7 @@ header {
     padding: 0 !important;
 }
 
-/* INPUT AREA */
+/* =================== INPUT AREA =================== */
 .input-area {
     padding: 1.5rem;
     border-top: 1px solid var(--border-color);
@@ -978,6 +968,7 @@ header {
     transform: translateY(-2px);
 }
 
+/* Icône d'envoi image */
 .send-icon-img {
     width: 24px;
     height: 24px;
@@ -1005,7 +996,7 @@ header {
     to { transform: rotate(360deg); }
 }
 
-/* TYPING INDICATOR */
+/* =================== TYPING INDICATOR - AMÉLIORÉ =================== */
 .typing-indicator {
     background: rgba(26, 31, 58, 0.9) !important;
     padding: 1.2rem !important;
@@ -1079,7 +1070,7 @@ header {
     50% { opacity: 1; }
 }
 
-/* STATS PANEL */
+/* =================== STATS PANEL =================== */
 .stats-panel {
     background: rgba(26, 31, 58, 0.6);
     border: 1px solid var(--border-color);
@@ -1130,6 +1121,7 @@ header {
     margin-top: 0.5rem;
 }
 
+/* =================== STATS GRID =================== */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1170,7 +1162,7 @@ header {
     color: var(--text-muted);
 }
 
-/* MODAL */
+/* =================== MODAL =================== */
 .modal {
     display: none;
     position: fixed;
@@ -1237,6 +1229,7 @@ header {
     opacity: 1;
 }
 
+/* =================== EXERCISE MODAL =================== */
 #exerciseModal .modal-content {
     max-width: 95vw !important;
     max-height: 95vh !important;
@@ -1329,7 +1322,7 @@ header {
     font-size: 1rem !important;
 }
 
-/* LOGOUT OVERLAY */
+/* =================== LOGOUT OVERLAY =================== */
 .logout-overlay {
     position: fixed;
     top: 0;
@@ -1409,7 +1402,7 @@ header {
     box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
 }
 
-/* TOAST */
+/* =================== TOAST =================== */
 .toast {
     position: fixed;
     bottom: -100px;
@@ -1457,7 +1450,7 @@ header {
     font-size: 0.95rem;
 }
 
-/* SCROLLBARS */
+/* =================== SCROLLBARS =================== */
 .messages-container::-webkit-scrollbar,
 .code-editor::-webkit-scrollbar,
 .exercise-text::-webkit-scrollbar,
@@ -1501,7 +1494,7 @@ header {
     background: var(--accent-cyan) !important;
 }
 
-/* ANIMATIONS LOTTIE */
+/* =================== ANIMATIONS LOTTIE RALENTIES =================== */
 .logo-icon svg,
 .welcome-avatar svg,
 .message-avatar svg {
@@ -1550,8 +1543,9 @@ header {
     }
 }
 
-/* ✅✅✅ MOBILE RESPONSIVE (768px et moins) - VERSION ULTRA-CORRIGÉE ✅✅✅ */
+/* ✅ ✅ ✅ MOBILE RESPONSIVE (768px et moins) - VERSION CORRIGÉE */
 @media (max-width: 768px) {
+    /* Layout mobile - 1 colonne */
     .main-layout {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
@@ -1560,78 +1554,34 @@ header {
         position: relative;
     }
     
-    /* ✅✅✅ HEADER MOBILE - TOUT DOIT ÊTRE VISIBLE ✅✅✅ */
+    /* ✅ Header mobile - BOUTON DE DÉCONNEXION VISIBLE */
     .header-content {
-        gap: 0.5rem !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-    }
-    
-    /* ✅ LOGO MOBILE - TOUJOURS VISIBLE */
-    .logo {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        gap: 0.5rem;
     }
     
     .logo-icon {
-        width: 50px !important;
-        height: 50px !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    /* ✅ TEXTE DU LOGO - VISIBLE SUR 768px */
-    .logo-text {
-        display: flex !important;
-        flex-direction: column !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        width: 50px;
+        height: 50px;
     }
     
     .logo-name {
-        font-size: 1rem !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: var(--text-primary) !important;
+        font-size: 1.1rem;
     }
     
     .logo-tagline {
-        font-size: 0.65rem !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: var(--text-muted) !important;
-    }
-    
-    /* ✅ USER INFO - VISIBLE SUR 768px */
-    .user-info {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        font-size: 0.65rem;
     }
     
     .user-name {
-        font-size: 0.85rem !important;
-        max-width: 100px !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: var(--text-primary) !important;
+        font-size: 0.9rem;
+        max-width: 100px;
     }
     
     .user-level {
-        font-size: 0.75rem !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        color: var(--text-muted) !important;
+        font-size: 0.75rem;
     }
     
-    /* ✅✅✅ BOUTON LOGOUT - ULTRA FORCÉ ✅✅✅ */
+    /* ✅ CORRECTION: Bouton déconnexion mobile */
     .logout-btn {
         padding: 0.5rem 0.75rem !important;
         font-size: 0.85rem !important;
@@ -1640,29 +1590,21 @@ header {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 0.4rem !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        background: var(--deep-blue) !important;
-        border: 1px solid var(--electric-blue) !important;
-        color: white !important;
+        gap: 0.3rem !important;
     }
     
+    /* Masquer le texte, afficher seulement l'icône */
     .logout-text {
         display: none !important;
     }
     
     .logout-icon {
-        display: inline-block !important;
+        display: block !important;
         font-size: 1.3rem !important;
-        visibility: visible !important;
-        opacity: 1 !important;
         margin: 0 !important;
-        padding: 0 !important;
-        flex-shrink: 0 !important;
-        color: white !important;
     }
     
+    /* Dropdown mobile */
     .dropdown-menu {
         position: fixed;
         top: 80px;
@@ -1679,6 +1621,7 @@ header {
         min-height: 36px;
     }
     
+    /* Sidebar mobile - coulissante */
     .sidebar {
         position: fixed;
         top: 0;
@@ -1704,12 +1647,14 @@ header {
         display: flex;
     }
     
+    /* Menu mobile */
     .mobile-menu-btn {
         display: flex;
         align-items: center;
         justify-content: center;
     }
     
+    /* Overlay pour menus mobiles */
     .sidebar-overlay {
         display: none;
         position: fixed;
@@ -1726,6 +1671,7 @@ header {
         display: block;
     }
     
+    /* Chat area */
     .chat-area {
         min-height: calc(100vh - 220px);
         order: 1;
@@ -1752,17 +1698,21 @@ header {
         order: 2;
     }
     
+    /* ✅ CORRECTION: Barre d'actions mobile - Éviter duplication */
     .mobile-actions-bar {
         display: flex !important;
         order: 1;
     }
     
+    /* ✅ Les boutons affichent leur contenu une seule fois */
     .mobile-action-btn {
         font-size: 0.75rem;
         padding: 0.5rem 0.4rem;
         min-height: 44px;
+        position: relative;
     }
     
+    /* Messages */
     .messages-container {
         padding: 1rem;
         flex: 1;
@@ -1784,6 +1734,7 @@ header {
         font-size: 0.9rem;
     }
     
+    /* Typing indicator mobile */
     .typing-indicator {
         max-width: 85% !important;
         min-width: 120px !important;
@@ -1803,6 +1754,7 @@ header {
         animation-duration: 1.5s !important;
     }
     
+    /* Input area */
     .input-area {
         padding: 1rem;
         order: 3;
@@ -1823,10 +1775,12 @@ header {
         height: 20px;
     }
     
+    /* ✅ STATS PANEL - MASQUÉ SUR MOBILE */
     .stats-panel {
         display: none !important;
     }
     
+    /* Welcome message mobile */
     .welcome-message {
         padding: 1.5rem 1rem;
     }
@@ -1853,6 +1807,7 @@ header {
         font-size: 0.85rem;
     }
     
+    /* Modal mobile */
     .modal-content {
         width: 95%;
         max-width: none;
@@ -1867,6 +1822,7 @@ header {
         font-size: 1.2rem;
     }
     
+    /* Exercise modal mobile */
     #exerciseModal .modal-content {
         width: 100% !important;
         height: 100vh !important;
@@ -1896,7 +1852,7 @@ header {
     }
 }
 
-/* ✅ MOBILE 480px - MASQUER CERTAINS ÉLÉMENTS */
+/* ✅ MOBILE (480px et moins) */
 @media (max-width: 480px) {
     .container {
         padding: 0 0.5rem;
@@ -1907,28 +1863,28 @@ header {
     }
     
     .logo-icon {
-        width: 45px !important;
-        height: 45px !important;
+        width: 45px;
+        height: 45px;
     }
     
     .logo-name {
-        font-size: 0.95rem !important;
+        font-size: 1rem;
     }
     
     .logo-tagline {
-        font-size: 0.6rem !important;
+        font-size: 0.6rem;
     }
     
     .user-name {
-        max-width: 80px !important;
-        font-size: 0.8rem !important;
+        max-width: 80px;
+        font-size: 0.85rem;
     }
     
-    /* ✅ Masquer user-level sur petit mobile */
     .user-level {
-        display: none !important;
+        display: none;
     }
     
+    /* ✅ Bouton déconnexion très petit mobile */
     .logout-btn {
         padding: 0.4rem 0.6rem !important;
         min-width: 40px !important;
@@ -1957,6 +1913,7 @@ header {
         min-height: 40px;
     }
     
+    /* ✅ Barre d'actions très petit mobile */
     .mobile-actions-bar {
         gap: 0.3rem;
         padding: 0.5rem;
@@ -2077,37 +2034,30 @@ header {
     }
 }
 
-/* ✅ TRÈS PETIT MOBILE 360px - MASQUER LOGO TEXT ET USER INFO */
+/* ✅ TRÈS PETIT MOBILE (360px et moins) */
 @media (max-width: 360px) {
-    /* ✅ Masquer le texte du logo */
     .logo-text {
-        display: none !important;
+        display: none;
     }
     
-    /* ✅ Masquer les infos utilisateur */
     .user-info {
-        display: none !important;
+        display: none;
     }
     
     .header-user {
         margin-left: auto;
     }
     
-    /* ✅ S'ASSURER que le bouton logout reste VISIBLE */
+    /* ✅ S'assurer que le bouton logout reste visible */
     .logout-btn {
         display: flex !important;
         padding: 0.4rem 0.5rem !important;
         min-width: 36px !important;
         min-height: 36px !important;
-        visibility: visible !important;
-        opacity: 1 !important;
     }
     
     .logout-icon {
         font-size: 1.1rem !important;
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
     }
     
     .dropdown-toggle {
@@ -2138,7 +2088,7 @@ header {
     }
 }
 
-/* TOUCH DEVICES */
+/* TOUCH DEVICES - Amélioration tactile */
 @media (hover: none) and (pointer: coarse) {
     .session-item,
     .btn,
