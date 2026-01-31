@@ -1,8 +1,8 @@
 {
   "name": "AI-Python-Tutor",
-  "description": "Tuteur IA pour apprendre Python du débutant à l'expert",
+  "description": "Tuteur IA pour apprendre Python du débutant à l'expert avec Groq",
   "repository": "https://github.com/yourusername/LLM_AI_Tutor",
-  "keywords": ["python", "ai", "tutor", "gpt", "education"],
+  "keywords": ["python", "ai", "tutor", "groq", "llama", "education"],
   "buildpacks": [
     {
       "url": "heroku/python"
@@ -12,13 +12,13 @@
     }
   ],
   "env": {
-    "OPENAI_API_KEY": {
-      "description": "Votre clé API OpenAI",
+    "GROQ_API_KEY": {
+      "description": "Votre clé API Groq",
       "required": true,
       "sensitive": true
     },
     "DATABASE_URL": {
-      "description": "URL de la base de données PostgreSQL",
+      "description": "URL de la base de données Sqlite",
       "required": true,
       "sensitive": true
     },
