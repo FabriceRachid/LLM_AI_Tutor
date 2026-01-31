@@ -195,6 +195,39 @@ header {
     color: var(--text-muted);
 }
 
+/* ✅ CORRECTION: Bouton de déconnexion */
+.logout-btn {
+    background: var(--deep-blue);
+    border: 1px solid var(--electric-blue);
+    color: white;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.logout-btn:hover {
+    background: var(--electric-blue);
+    box-shadow: var(--glow-blue);
+}
+
+.logout-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.logout-text {
+    flex-shrink: 0;
+}
+
 /* =================== DROPDOWN MENU =================== */
 .dropdown {
     position: relative;
@@ -590,7 +623,7 @@ header {
     flex-shrink: 0;
 }
 
-/* =================== MOBILE ACTIONS BAR =================== */
+/* ✅ CORRECTION: MOBILE ACTIONS BAR - Éviter la duplication de texte */
 .mobile-actions-bar {
     display: none;
     flex-direction: row;
@@ -1505,24 +1538,23 @@ header {
         max-width: 80%;
     }
     
-    /* Typing indicator tablet */
     .typing-indicator {
         max-width: 80% !important;
     }
 }
 
-/* =================== MOBILE RESPONSIVE (768px et moins) - CORRIGÉ =================== */
+/* ✅ ✅ ✅ MOBILE RESPONSIVE (768px et moins) - VERSION CORRIGÉE */
 @media (max-width: 768px) {
     /* Layout mobile - 1 colonne */
     .main-layout {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto 1fr;
         height: calc(100vh - 100px);
         gap: 0;
         position: relative;
     }
     
-    /* Header mobile */
+    /* ✅ Header mobile - BOUTON DE DÉCONNEXION VISIBLE */
     .header-content {
         gap: 0.5rem;
     }
@@ -1549,17 +1581,27 @@ header {
         font-size: 0.75rem;
     }
     
+    /* ✅ CORRECTION: Bouton déconnexion mobile */
     .logout-btn {
-        padding: 0.4rem 0.8rem !important;
-        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.3rem !important;
     }
     
+    /* Masquer le texte, afficher seulement l'icône */
     .logout-text {
-        display: none;
+        display: none !important;
     }
     
     .logout-icon {
-        font-size: 1.3rem;
+        display: block !important;
+        font-size: 1.3rem !important;
+        margin: 0 !important;
     }
     
     /* Dropdown mobile */
@@ -1656,10 +1698,18 @@ header {
         order: 2;
     }
     
-    /* Barre d'actions mobile */
+    /* ✅ CORRECTION: Barre d'actions mobile - Éviter duplication */
     .mobile-actions-bar {
         display: flex !important;
         order: 1;
+    }
+    
+    /* ✅ Les boutons affichent leur contenu une seule fois */
+    .mobile-action-btn {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.4rem;
+        min-height: 44px;
+        position: relative;
     }
     
     /* Messages */
@@ -1700,7 +1750,6 @@ header {
         font-size: 0.85rem !important;
     }
     
-    /* Désactiver certaines animations sur mobile pour performance */
     .neuron {
         animation-duration: 1.5s !important;
     }
@@ -1726,109 +1775,8 @@ header {
         height: 20px;
     }
     
-    /* ✅ STATS PANEL MOBILE CORRIGÉ */
+    /* ✅ STATS PANEL - MASQUÉ SUR MOBILE */
     .stats-panel {
-        display: flex !important;
-        flex-direction: column !important;
-        position: relative !important;
-        order: 4 !important;
-        width: 100% !important;
-        padding: 0 !important;
-        background: rgba(26, 31, 58, 0.95) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 1px solid var(--border-color) !important;
-        border-top: 1px solid var(--border-color) !important;
-        border-bottom: none !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-radius: 0 !important;
-        margin-top: 0 !important;
-        max-height: none !important;
-        gap: 0 !important;
-        justify-content: flex-start !important;
-    }
-    
-    /* Bouton toggle TOUJOURS visible */
-    .mobile-stats-toggle {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 100% !important;
-        gap: 0.5rem !important;
-        padding: 0.75rem 1rem !important;
-        background: var(--deep-blue) !important;
-        border: none !important;
-        border-bottom: 1px solid var(--border-color) !important;
-        color: white !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: all 0.3s !important;
-        margin-bottom: 0 !important;
-        border-radius: 0 !important;
-        min-height: 50px !important;
-    }
-    
-    .mobile-stats-toggle:hover {
-        background: var(--electric-blue) !important;
-    }
-    
-    .stats-toggle-icon {
-        margin-right: 0.5rem !important;
-        font-size: 1.2rem !important;
-    }
-    
-    .stats-toggle-text {
-        flex: 1 !important;
-        text-align: center !important;
-    }
-    
-    /* Contenu des stats - TOUJOURS VISIBLE */
-    .stats-content {
-        display: flex !important;
-        flex-direction: column !important;
-        padding: 1rem !important;
-        gap: 1.5rem !important;
-        background: rgba(26, 31, 58, 0.95) !important;
-        width: 100% !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        max-height: none !important;
-        overflow: visible !important;
-    }
-    
-    /* Section des stats (chiffres) */
-    .stats-content > div:first-child {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 1rem !important;
-        width: 100% !important;
-        padding-bottom: 1rem !important;
-        border-bottom: 1px solid var(--border-color) !important;
-    }
-    
-    .stat-item {
-        text-align: center !important;
-        margin-bottom: 0 !important;
-        flex: 1 !important;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
-        color: var(--electric-blue) !important;
-        line-height: 1 !important;
-        margin-bottom: 0.3rem !important;
-    }
-    
-    .stat-label {
-        font-size: 0.75rem !important;
-        color: var(--text-muted) !important;
-        margin-top: 0.3rem !important;
-    }
-    
-    /* Section des boutons - MASQUÉE sur mobile car on a la barre d'actions */
-    .stats-content > div:last-child {
         display: none !important;
     }
     
@@ -1904,14 +1852,12 @@ header {
     }
 }
 
-/* MOBILE (480px et moins) */
+/* ✅ MOBILE (480px et moins) */
 @media (max-width: 480px) {
-    /* Container */
     .container {
         padding: 0 0.5rem;
     }
     
-    /* Header très petit mobile */
     header {
         padding: 0.75rem 0;
     }
@@ -1938,11 +1884,17 @@ header {
         display: none;
     }
     
+    /* ✅ Bouton déconnexion très petit mobile */
     .logout-btn {
-        padding: 0.3rem 0.6rem !important;
+        padding: 0.4rem 0.6rem !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
     }
     
-    /* Dropdown très petit */
+    .logout-icon {
+        font-size: 1.2rem !important;
+    }
+    
     .dropdown-toggle {
         padding: 0.3rem 0.5rem;
         min-width: 32px;
@@ -1954,7 +1906,6 @@ header {
         max-width: 250px;
     }
     
-    /* Boutons */
     .btn {
         padding: 0.5rem 0.75rem;
         font-size: 0.85rem;
@@ -1962,19 +1913,18 @@ header {
         min-height: 40px;
     }
     
-    /* Barre d'actions mobile */
+    /* ✅ Barre d'actions très petit mobile */
     .mobile-actions-bar {
         gap: 0.3rem;
         padding: 0.5rem;
     }
     
     .mobile-action-btn {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         padding: 0.5rem 0.3rem;
         min-height: 40px;
     }
     
-    /* Messages */
     .message-content-wrapper {
         max-width: 90%;
     }
@@ -1990,7 +1940,6 @@ header {
         font-size: 1rem;
     }
     
-    /* Input */
     .input-field {
         font-size: 0.85rem;
         padding: 0.5rem 0.6rem;
@@ -2006,7 +1955,6 @@ header {
         height: 18px;
     }
     
-    /* Sidebar mobile */
     .sidebar {
         width: 90%;
         max-width: 280px;
@@ -2031,27 +1979,11 @@ header {
         font-size: 1rem !important;
     }
     
-    /* Stats mobile - petits ajustements */
-    .stats-content > div:first-child {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.75rem !important;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem !important;
-    }
-    
-    .stat-label {
-        font-size: 0.7rem !important;
-    }
-    
-    /* Stats grid mobile */
     .stats-grid {
         grid-template-columns: 1fr;
         gap: 0.75rem;
     }
     
-    /* Welcome */
     .welcome-title {
         font-size: 1.3rem;
     }
@@ -2075,12 +2007,10 @@ header {
         padding: 0.4rem 0;
     }
     
-    /* Modal */
     .modal-title {
         font-size: 1.1rem;
     }
     
-    /* Level options */
     .level-option {
         padding: 1rem !important;
     }
@@ -2093,7 +2023,6 @@ header {
         font-size: 0.8rem !important;
     }
     
-    /* Toast */
     .toast {
         min-width: 200px;
         max-width: 90%;
@@ -2105,7 +2034,7 @@ header {
     }
 }
 
-/* TRÈS PETIT MOBILE (360px et moins) */
+/* ✅ TRÈS PETIT MOBILE (360px et moins) */
 @media (max-width: 360px) {
     .logo-text {
         display: none;
@@ -2119,6 +2048,18 @@ header {
         margin-left: auto;
     }
     
+    /* ✅ S'assurer que le bouton logout reste visible */
+    .logout-btn {
+        display: flex !important;
+        padding: 0.4rem 0.5rem !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+    }
+    
+    .logout-icon {
+        font-size: 1.1rem !important;
+    }
+    
     .dropdown-toggle {
         margin-left: auto;
     }
@@ -2128,17 +2069,13 @@ header {
         padding: 0.4rem 0.6rem;
     }
     
-    /* Barre d'actions mobile */
-    .mobile-action-btn span {
-        display: none;
+    .mobile-action-btn {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.2rem;
     }
     
-    .mobile-action-btn::after {
-        content: attr(title);
-        font-size: 0.65rem;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
+    .mobile-actions-bar {
+        gap: 0.2rem;
     }
     
     .message-content {
@@ -2149,47 +2086,18 @@ header {
     .sidebar {
         width: 95%;
     }
-    
-    /* Stats sur très petit écran */
-    .stat-value {
-        font-size: 1.4rem !important;
-    }
-    
-    .stat-label {
-        font-size: 0.65rem !important;
-    }
-    
-    .mobile-stats-toggle {
-        font-size: 0.9rem !important;
-        padding: 0.75rem !important;
-    }
-    
-    .stats-content > div:first-child {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.5rem !important;
-    }
-    
-    /* Ajustements de la barre d'actions pour très petit écran */
-    .mobile-action-btn {
-        font-size: 0.7rem;
-        padding: 0.4rem 0.2rem;
-    }
-    
-    .mobile-actions-bar {
-        gap: 0.2rem;
-    }
 }
 
 /* TOUCH DEVICES - Amélioration tactile */
 @media (hover: none) and (pointer: coarse) {
-    /* Plus d'espace pour les éléments tactiles */
     .session-item,
     .btn,
     .delete-session-btn,
     .input-field,
     .send-btn,
     .mobile-action-btn,
-    .dropdown-item {
+    .dropdown-item,
+    .logout-btn {
         min-height: 48px;
     }
     
@@ -2210,20 +2118,20 @@ header {
         min-height: 48px;
     }
     
-    /* Désactiver les effets hover sur mobile */
     .btn:hover,
     .session-item:hover,
     .send-btn:hover,
-    .mobile-action-btn:hover {
+    .mobile-action-btn:hover,
+    .logout-btn:hover {
         transform: none;
     }
     
-    /* Feedback tactile avec active state */
     .btn:active,
     .session-item:active,
     .send-btn:active,
     .mobile-action-btn:active,
-    .dropdown-item:active {
+    .dropdown-item:active,
+    .logout-btn:active {
         transform: scale(0.98);
         opacity: 0.9;
     }
@@ -2256,20 +2164,6 @@ header {
     .ai-presentation {
         padding: 0.75rem;
     }
-    
-    /* Stats en paysage */
-    .stats-panel {
-        max-height: 50vh;
-    }
-    
-    .stats-content > div:first-child {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.75rem !important;
-    }
-    
-    .stat-value {
-        font-size: 1.6rem !important;
-    }
 }
 
 /* HAUTEUR RESTREINTE */
@@ -2289,24 +2183,6 @@ header {
     
     .session-time {
         font-size: 0.7rem;
-    }
-    
-    /* Stats en hauteur réduite */
-    .stats-panel {
-        max-height: auto;
-    }
-    
-    .stats-content > div:first-child {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.5rem !important;
-    }
-    
-    .stat-item {
-        margin-bottom: 0 !important;
-    }
-    
-    .stat-value {
-        font-size: 1.6rem !important;
     }
     
     .welcome-avatar {
@@ -2331,62 +2207,21 @@ header {
 
 /* OPTIMISATION PERFORMANCE MOBILE */
 @media (max-width: 768px) {
-    /* Réduire les animations sur mobile pour performance */
     * {
         animation-duration: 0.2s !important;
     }
     
-    /* Simplifier les ombres sur mobile */
     .btn-primary:hover,
     .btn-secondary:hover,
     .send-btn:hover,
-    .mobile-action-btn:hover {
+    .mobile-action-btn:hover,
+    .logout-btn:hover {
         box-shadow: none;
     }
     
-    /* Améliorer le scroll sur mobile */
     .messages-container,
     .modal-body-scroll {
         -webkit-overflow-scrolling: touch;
         scroll-behavior: smooth;
-    }
-
-     /* ✅ MASQUER le panneau stats en bas */
-    .stats-panel {
-        display: none !important;
-    }
-    
-    /* ✅ MASQUER le bouton toggle stats */
-    .mobile-stats-toggle {
-        display: none !important;
-    }
-    
-    /* ✅ AJUSTER le layout principal */
-    .main-layout {
-        grid-template-columns: 1fr !important;
-        grid-template-rows: auto 1fr auto !important;
-    }
-}
-
-/* Animations pour les overlays */
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
     }
 }
