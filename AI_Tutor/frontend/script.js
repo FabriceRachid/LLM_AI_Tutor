@@ -1,5 +1,6 @@
-const API_URL = window.location.origin.includes('localhost') 
-    ? 'http://localhost:5000/api' 
+
+const API_URL = window.location.origin.includes('localhost')
+    ? 'http://localhost:5000/api'
     : '/api';
 
 let currentUser = null;
@@ -25,16 +26,16 @@ async function initializeApp() {
     try {
         // Vérifier si l'utilisateur est déjà connecté
         const savedUserId = localStorage.getItem('userId');
-        
+       
         if (!savedUserId) {
             // Aucun utilisateur connecté, montrer le modal de création
             document.getElementById('userModal').classList.add('show');
             return;
         }
-        
+       
         // Vérifier si l'utilisateur existe encore
         const response = await fetch(`${API_URL}/users/${savedUserId}`);
-        
+       
         if (response.ok) {
             currentUser = await response.json();
             await loadUserSessions();
@@ -64,7 +65,7 @@ function setupMobileNavigation() {
         overlay.onclick = closeMobileMenu;
         document.body.appendChild(overlay);
     }
-    
+   
     if (!document.getElementById('statsOverlay')) {
         const overlay = document.createElement('div');
         overlay.id = 'statsOverlay';
@@ -72,13 +73,12 @@ function setupMobileNavigation() {
         overlay.onclick = closeMobileStats;
         document.body.appendChild(overlay);
     }
-    
     // Initialiser les boutons mobiles
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     }
-    
+   
     const mobileStatsToggle = document.getElementById('mobileStatsToggle');
     if (mobileStatsToggle) {
         mobileStatsToggle.addEventListener('click', toggleMobileStats);
@@ -88,9 +88,9 @@ function setupMobileNavigation() {
 function setupMobileStatsPanel() {
     const statsToggle = document.getElementById('mobileStatsToggle');
     const statsPanel = document.getElementById('mobileStatsPanel');
-    
+   
     if (!statsToggle || !statsPanel) return;
-    
+   
     // Fermer le panneau stats quand on clique à l'extérieur
     document.addEventListener('click', (e) => {
         if (!statsPanel.contains(e.target) && !statsToggle.contains(e.target) && statsPanel.classList.contains('active')) {
@@ -105,38 +105,38 @@ function setupMobileActions() {
     if (mobileChangeLevelBtn) {
         mobileChangeLevelBtn.addEventListener('click', showChangeLevelModal);
     }
-    
+   
     // Configurer le bouton Exercice mobile
     const mobileExerciseBtn = document.getElementById('mobileExerciseBtn');
     if (mobileExerciseBtn) {
         mobileExerciseBtn.addEventListener('click', () => requestExercise());
     }
-    
+   
     // Le bouton Réviser utilise déjà onclick dans le HTML
 }
 
 async function createNewUser() {
     const modal = document.getElementById('userModal');
     modal.classList.add('show');
-    
+   
     document.getElementById('createUserBtn').onclick = async () => {
         const username = document.getElementById('usernameInput').value.trim();
         const email = document.getElementById('emailInput').value.trim();
-        
+       
         if (!username || !email) {
             showToast('Remplissez tous les champs', 'error');
             return;
         }
-        
+       
         try {
             const response = await fetch(`${API_URL}/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email })
             });
-            
+           
             if (!response.ok) throw new Error('Erreur création utilisateur');
-            
+           
             currentUser = await response.json();
             localStorage.setItem('userId', currentUser.id);
             modal.classList.remove('show');
@@ -155,22 +155,22 @@ function setupEventListeners() {
         messageInput.addEventListener('keypress', handleKeyPress);
         messageInput.addEventListener('input', (e) => autoResize(e.target));
     }
-    
+   
     document.getElementById('sendBtn')?.addEventListener('click', sendMessage);
     document.getElementById('newSessionBtn')?.addEventListener('click', showNewSessionModal);
     document.getElementById('exerciseBtn')?.addEventListener('click', () => requestExercise());
     document.getElementById('changeLevelBtn')?.addEventListener('click', showChangeLevelModal);
-    
+   
     // User creation event
     document.getElementById('createUserBtn')?.addEventListener('click', createNewUser);
-    
+   
     // Gestion du clic en dehors des menus mobiles
     document.addEventListener('click', (e) => {
         // Fermer le menu latéral si on clique en dehors
         const sidebar = document.getElementById('mobileSidebar');
         const menuBtn = document.getElementById('mobileMenuBtn');
-        if (sidebar && sidebar.classList.contains('active') && 
-            !sidebar.contains(e.target) && 
+        if (sidebar && sidebar.classList.contains('active') &&
+            !sidebar.contains(e.target) &&
             menuBtn && !menuBtn.contains(e.target)) {
             closeMobileMenu();
         }
@@ -184,16 +184,16 @@ function setupEventListeners() {
 function toggleMobileMenu() {
     const sidebar = document.getElementById('mobileSidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    
+   
     if (sidebar && overlay) {
         const isOpening = !sidebar.classList.contains('active');
-        
+       
         // Fermer d'abord les autres menus
         closeMobileStats();
-        
+       
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
-        
+       
         // Empêcher le scroll du body quand le menu est ouvert
         if (isOpening) {
             document.body.style.overflow = 'hidden';
@@ -206,7 +206,7 @@ function toggleMobileMenu() {
 function closeMobileMenu() {
     const sidebar = document.getElementById('mobileSidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    
+   
     if (sidebar && overlay) {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
@@ -217,19 +217,19 @@ function closeMobileMenu() {
 function toggleMobileStats() {
     const statsPanel = document.getElementById('mobileStatsPanel');
     const overlay = document.getElementById('statsOverlay');
-    
+   
     if (statsPanel) {
         const isOpening = !statsPanel.classList.contains('active');
-        
+       
         // Fermer d'abord le menu latéral
         closeMobileMenu();
-        
+       
         statsPanel.classList.toggle('active');
-        
+       
         if (overlay) {
             overlay.classList.toggle('active');
         }
-        
+       
         // Mettre à jour le bouton mobile
         const statsBtn = document.getElementById('mobileStatsToggle');
         if (statsBtn) {
@@ -249,39 +249,39 @@ function toggleMobileStats() {
 function closeMobileStats() {
     const statsPanel = document.getElementById('mobileStatsPanel');
     const overlay = document.getElementById('statsOverlay');
-    
+   
     if (statsPanel) {
         statsPanel.classList.remove('active');
     }
-    
+   
     if (overlay) {
         overlay.classList.remove('active');
     }
-    
+   
     // Réinitialiser le bouton toggle
     const statsBtn = document.getElementById('mobileStatsToggle');
     if (statsBtn) {
         statsBtn.innerHTML = '<span class="stats-toggle-icon">📊</span><span class="stats-toggle-text">Stats & Exercices</span>';
         statsBtn.style.background = 'var(--deep-blue)';
     }
-    
+   
     document.body.style.overflow = '';
 }
 
 function updateUserDisplay() {
     if (!currentUser) return;
-    
+   
     // Version desktop/tablette
     document.getElementById('userName').textContent = currentUser.username;
     document.getElementById('userLevel').textContent = `Niveau: ${translateLevel(currentUser.current_level)}`;
     document.getElementById('levelBadge').textContent = translateLevel(currentUser.current_level).toUpperCase();
-    
+   
     // Version mobile
     const userNameMobile = document.getElementById('userNameMobile');
     if (userNameMobile) {
         userNameMobile.textContent = currentUser.username;
     }
-    
+   
     loadUserStats();
 }
 
@@ -299,17 +299,17 @@ async function loadUserStats() {
         const response = await fetch(`${API_URL}/users/${currentUser.id}/exercises`);
         if (response.ok) {
             const data = await response.json();
-            
+           
             // ✅ CORRECTION: Récupérer les valeurs directement de la réponse
             const totalExercises = data.total_exercises || 0;
             const successRate = data.success_rate || 0;
             const streak = data.streak || 0;
-            
+           
             // ✅ CORRECTION: Mettre à jour l'affichage avec les bonnes valeurs
             document.getElementById('totalExercises').textContent = totalExercises;
             document.getElementById('successRate').textContent = Math.round(successRate) + '%';
             document.getElementById('streak').textContent = streak;
-            
+           
             console.log('Stats chargées:', { totalExercises, successRate, streak });
         } else {
             throw new Error(`HTTP ${response.status}`);
@@ -351,16 +351,16 @@ async function loadUserSessions() {
 function displaySessions() {
     const sidebar = document.getElementById('sessionsList');
     sidebar.innerHTML = '';
-    
+   
     if (allSessions.length === 0) {
         sidebar.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Aucune session</p>';
         return;
     }
-    
+   
     allSessions.forEach(session => {
         const sessionEl = document.createElement('div');
         sessionEl.className = `session-item ${currentSession?.id === session.id ? 'active' : ''}`;
-        
+       
         sessionEl.innerHTML = `
             <div class="session-content">
                 <div class="session-topic">${session.topic || 'Chat général'}</div>
@@ -377,22 +377,22 @@ function displaySessions() {
                 🗑️
             </button>
         `;
-        
+       
         // Gestionnaires d'événements
         const contentDiv = sessionEl.querySelector('.session-content');
         const deleteBtn = sessionEl.querySelector('.delete-session-btn');
-        
+       
         contentDiv.addEventListener('click', () => {
             loadSession(session.id);
             // Fermer le menu mobile après sélection
             closeMobileMenu();
         });
-        
+       
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteSession(session.id);
         });
-        
+       
         sidebar.appendChild(sessionEl);
     });
 }
@@ -415,16 +415,16 @@ async function loadSession(sessionId) {
 function displayChatMessages() {
     const container = document.getElementById('messagesContainer');
     container.innerHTML = '';
-    
+   
     // Supprimer d'abord tout contenu existant
     while (container.firstChild) {
         container.removeChild(container.firstChild);
     }
-    
+   
     // Vérifier s'il y a une session active et des messages
     const hasSession = currentSession && currentSession.id;
     const hasMessages = currentSession?.messages?.length > 0;
-    
+   
     if (!hasSession || !hasMessages) {
         const welcomeDiv = document.createElement('div');
         welcomeDiv.className = 'welcome-message';
@@ -434,8 +434,8 @@ function displayChatMessages() {
                 👋 ${currentSession?.topic ? currentSession.topic : 'Bonjour ! Je suis AI Tutor'}
             </div>
             <div class="welcome-subtitle">
-                ${currentSession?.topic 
-                    ? `Posez vos questions sur ${currentSession.topic}!` 
+                ${currentSession?.topic
+                    ? `Posez vos questions sur ${currentSession.topic}!`
                     : 'Votre assistant virtuel intelligent pour apprendre Python'}
             </div>
             ${!currentSession?.topic ? `
@@ -454,7 +454,7 @@ function displayChatMessages() {
             ` : ''}
         `;
         container.appendChild(welcomeDiv);
-        
+       
         // Ajouter l'animation Lottie au welcome avatar
         setTimeout(() => {
             const reloadAvatar = document.getElementById('reload-welcome-avatar');
@@ -469,10 +469,10 @@ function displayChatMessages() {
                 });
             }
         }, 100);
-        
+       
         return;
     }
-    
+   
     // Afficher les messages existants avec horodatages du serveur
     currentSession.messages.forEach(msg => {
         if (msg.created_at) {
@@ -483,7 +483,7 @@ function displayChatMessages() {
             addMessageToUI(msg.content, msg.role);
         }
     });
-    
+   
     // Scroll vers le bas
     container.scrollTop = container.scrollHeight;
 }
@@ -496,11 +496,11 @@ function showNewSessionModal() {
     // Fermer les menus mobiles
     closeMobileMenu();
     closeMobileStats();
-    
+   
     const modal = document.getElementById('newSessionModal');
     modal.classList.add('show');
     document.getElementById('topicInput').value = '';
-    
+   
     document.getElementById('createSessionBtn').onclick = async () => {
         const topic = document.getElementById('topicInput').value.trim() || 'Chat général';
         await createNewSession(topic);
@@ -523,13 +523,13 @@ async function createNewSession(topic) {
                 topic: topic
             })
         });
-        
+       
         if (!response.ok) throw new Error('Erreur création session');
-        
+       
         currentSession = await response.json();
         await loadUserSessions();
         displayChatMessages();
-        
+       
         showToast(`Nouvelle session: ${topic} `, 'success');
     } catch (error) {
         console.error('Erreur:', error);
@@ -541,7 +541,7 @@ async function createAutoSession(firstMessage) {
     try {
         // Extraire un sujet de la première question
         const topic = extractTopicFromMessage(firstMessage);
-        
+       
         const response = await fetch('/api/sessions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -550,7 +550,7 @@ async function createAutoSession(firstMessage) {
                 topic: topic
             })
         });
-        
+       
         if (response.ok) {
             currentSession = await response.json();
             document.getElementById('currentTopic').textContent = currentSession.topic;
@@ -571,7 +571,7 @@ function extractTopicFromMessage(message) {
     // Utiliser directement la première requête comme nom de session
     // Limiter à 50 caractères pour éviter les noms trop longs
     let topic = message.trim();
-    
+   
     // Si le message est trop long, on le tronque intelligemment
     if (topic.length > 50) {
         // Trouver le dernier espace avant 50 caractères
@@ -582,7 +582,7 @@ function extractTopicFromMessage(message) {
             topic = topic.substring(0, 47) + '...';
         }
     }
-    
+   
     return topic;
 }
 
@@ -590,15 +590,15 @@ async function deleteSession(sessionId) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette session?')) {
         return;
     }
-    
+   
     try {
         const response = await fetch(`${API_URL}/sessions/${sessionId}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' }
         });
-        
+       
         if (!response.ok) throw new Error('Erreur suppression session');
-        
+       
         if (currentSession?.id === sessionId) {
             currentSession = null;
             document.getElementById('messagesContainer').innerHTML = `
@@ -620,7 +620,7 @@ async function deleteSession(sessionId) {
                     </div>
                 </div>
             `;
-            
+           
             // Ajouter l'animation au nouvel avatar
             setTimeout(() => {
                 const deleteAvatar = document.getElementById('delete-welcome-avatar');
@@ -635,10 +635,10 @@ async function deleteSession(sessionId) {
                     });
                 }
             }, 100);
-            
+           
             document.getElementById('currentTopic').textContent = 'Bienvenue';
         }
-        
+       
         await loadUserSessions();
         showToast('Session supprimée ✓', 'success');
     } catch (error) {
@@ -667,9 +667,9 @@ async function sendMessage() {
     const input = document.getElementById('messageInput');
     const message = input.value.trim();
     const sendBtn = document.getElementById('sendBtn');
-    
+   
     if (!message || isLoading) return;
-    
+   
     // Créer une session automatiquement si nécessaire
     if (!currentSession) {
         await createAutoSession(message);
@@ -680,20 +680,20 @@ async function sendMessage() {
     addMessageToUI(message, 'user');
     input.value = '';
     input.style.height = 'auto';
-    
+   
     // ✅ FORCER un délai minimum pour l'indicateur
     const typingStartTime = Date.now();
     const MIN_TYPING_TIME = 1000; // 1 seconde minimum
-    
+   
     showTypingIndicator();
-    
+   
     try {
         const response = await fetch(`${API_URL}/sessions/${currentSession.id}/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: message })
         });
-        
+       
         if (!response.ok) {
             let errorMessage = 'Erreur lors de l\'envoi du message';
             try {
@@ -704,20 +704,20 @@ async function sendMessage() {
             }
             throw new Error(errorMessage);
         }
-        
+       
         const data = await response.json();
-        
+       
         // ✅ CALCULER le temps restant pour atteindre 1 seconde
         const elapsedTime = Date.now() - typingStartTime;
         const remainingTime = Math.max(0, MIN_TYPING_TIME - elapsedTime);
-        
+       
         // ✅ ATTENDRE si nécessaire avant de masquer l'indicateur
         if (remainingTime > 0) {
             await new Promise(resolve => setTimeout(resolve, remainingTime));
         }
-        
+       
         removeTypingIndicator();
-        
+       
         if (data.assistant_message && data.assistant_message.content) {
             // Utiliser les horodatages du serveur
             if (data.assistant_message.created_at) {
@@ -730,29 +730,29 @@ async function sendMessage() {
         } else {
             showToast('Réponse vide reçue du serveur', 'error');
         }
-        
+       
         // Mettre à jour la session
         await loadSession(currentSession.id);
     } catch (error) {
         console.error('Erreur:', error);
-        
+       
         // ✅ S'assurer que l'indicateur est masqué même en cas d'erreur
         const elapsedTime = Date.now() - typingStartTime;
         const remainingTime = Math.max(0, MIN_TYPING_TIME - elapsedTime);
-        
+       
         if (remainingTime > 0) {
             await new Promise(resolve => setTimeout(resolve, remainingTime));
         }
-        
+       
         removeTypingIndicator();
-        
+       
         // Network error or server error
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             showToast('Erreur réseau - vérifiez votre connexion', 'error');
         } else {
             showToast(`Erreur: ${error.message}`, 'error');
         }
-        
+       
         // Add error message to UI
         addMessageToUI(`❌ Erreur: ${error.message}`, 'assistant');
     } finally {
@@ -764,22 +764,22 @@ async function sendMessage() {
 
 function addMessageToUI(content, role) {
     const container = document.getElementById('messagesContainer');
-    
+   
     // Supprimer le message de bienvenue s'il existe
     const welcome = container.querySelector('.welcome-message');
     if (welcome) welcome.remove();
-    
+   
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    
+   
     const name = role === 'user' ? currentUser.username : 'Tuteur IA';
-    
+   
     // Utiliser l'horodatage exact du serveur si disponible, sinon horodatage local
     const timestamp = new Date();
     const displayTime = timestamp.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
-    
+   
     const avatarId = 'avatar-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-    
+   
     messageDiv.innerHTML = `
         <div class="message-avatar" id="${avatarId}"></div>
         <div class="message-content-wrapper">
@@ -790,10 +790,10 @@ function addMessageToUI(content, role) {
             <div class="message-content">${formatMessage(content)}</div>
         </div>
     `;
-    
+   
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
-    
+   
     // Ajouter l'animation Lottie pour l'avatar de l'assistant
     if (role === 'assistant') {
         setTimeout(() => {
@@ -820,19 +820,19 @@ function addMessageToUI(content, role) {
 
 function formatMessage(content) {
     if (!content) return '';
-    
+   
     // Convertir les URLs en liens (avec limite de longueur affichée)
     content = content.replace(/https?:\/\/[^\s]+/g, (url) => {
         const displayUrl = url.length > 50 ? url.substring(0, 47) + '...' : url;
         return `<a href="${url}" target="_blank" title="${url}" style="word-break: break-all;">🔗 ${displayUrl}</a>`;
     });
-    
+   
     // Convertir les ** en bold
     content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
+   
     // Convertir les * en italic
     content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
+   
     // Convertir les ``` en code blocks avec scroll horizontal si nécessaire
     content = content.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `<pre style="
@@ -844,30 +844,30 @@ function formatMessage(content) {
             border: 1px solid var(--border-color);
         "><code style="white-space: pre;">${code.trim()}</code></pre>`;
     });
-    
+   
     // Convertir le code inline
     content = content.replace(/`([^`]+)`/g, '<code style="background: var(--bg-secondary); padding: 0.2em 0.4em; border-radius: 3px;">$1</code>');
-    
+   
     // Convertir les retours à la ligne
     content = content.replace(/\n/g, '<br>');
-    
+   
     return content;
 }
 
 // Fonction pour afficher un message avec un horodatage spécifique (depuis le serveur)
 function displayMessageWithTimestamp(content, role, displayTime) {
     const container = document.getElementById('messagesContainer');
-    
+   
     // Supprimer le message de bienvenue s'il existe
     const welcome = container.querySelector('.welcome-message');
     if (welcome) welcome.remove();
-    
+   
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    
+   
     const name = role === 'user' ? currentUser.username : 'Tuteur IA';
     const avatarId = 'avatar-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-    
+   
     messageDiv.innerHTML = `
         <div class="message-avatar" id="${avatarId}"></div>
         <div class="message-content-wrapper">
@@ -878,10 +878,10 @@ function displayMessageWithTimestamp(content, role, displayTime) {
             <div class="message-content">${formatMessage(content)}</div>
         </div>
     `;
-    
+   
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
-    
+   
     // Ajouter l'animation Lottie pour l'avatar
     if (role === 'assistant') {
         setTimeout(() => {
@@ -911,11 +911,11 @@ function showTypingIndicator() {
     const typingDiv = document.createElement('div');
     typingDiv.id = 'typingIndicator';
     typingDiv.className = 'message assistant';
-    
+   
     // Horodatage exact pour l'IA
     const timestamp = new Date();
     const displayTime = timestamp.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
-    
+   
     typingDiv.innerHTML = `
         <div class="message-avatar"></div>
         <div class="message-content-wrapper">
@@ -937,10 +937,10 @@ function showTypingIndicator() {
             </div>
         </div>
     `;
-    
+   
     container.appendChild(typingDiv);
     container.scrollTop = container.scrollHeight;
-    
+   
     // Ajouter l'animation Lottie à l'avatar du typing indicator
     setTimeout(() => {
         const avatar = typingDiv.querySelector('.message-avatar');
@@ -967,7 +967,7 @@ function removeTypingIndicator() {
         typing.style.opacity = '0';
         typing.style.transform = 'translateY(10px)';
         typing.style.transition = 'all 0.3s ease';
-        
+       
         setTimeout(() => {
             typing.remove();
         }, 300);
@@ -987,10 +987,10 @@ async function requestExercise(topic = null) {
     try {
         // Fermer le panneau stats mobile si ouvert
         closeMobileStats();
-        
+       
         isLoading = true;
         showToast('Génération d\'exercice en cours...', 'success');
-        
+       
         const response = await fetch(`${API_URL}/exercises/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -999,9 +999,9 @@ async function requestExercise(topic = null) {
                 topic: topic || currentSession?.topic || 'Python basics'
             })
         });
-        
+       
         if (!response.ok) throw new Error('Erreur génération exercice');
-        
+       
         currentExercise = await response.json();
         document.getElementById('exerciseText').innerHTML = formatMessage(currentExercise.exercise);
         document.getElementById('codeEditor').value = '';
@@ -1017,7 +1017,7 @@ async function requestExercise(topic = null) {
 
 async function submitExercise() {
     const code = document.getElementById('codeEditor').value;
-    
+   
     if (!code.trim()) {
         showToast('Écrivez du code d\'abord', 'error');
         return;
@@ -1026,54 +1026,54 @@ async function submitExercise() {
     try {
         isLoading = true;
         showToast('Évaluation en cours...', 'info');
-        
+       
         const response = await fetch(`${API_URL}/exercises/${currentExercise.exercise_id}/submit`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 code: code,
                 user_id: currentUser.id
             })
         });
-        
+       
         const data = await response.json();
-        
+       
         if (!response.ok) {
             throw new Error(data.error || `Erreur ${response.status}: ${response.statusText}`);
         }
-        
+       
         displayExerciseResults(data);
-        
+       
         // ✅ CORRECTION: Mettre à jour les stats directement
         if (data.user_stats) {
             currentUser = { ...currentUser, ...data.user_stats };
-            
+           
             // ✅ CORRECTION: Mettre à jour les éléments DOM directement
             const totalExercises = data.user_stats.total_exercises || 0;
             const successRate = data.user_stats.success_rate || 0;
             const streak = data.user_stats.streak || 0;
-            
+           
             document.getElementById('totalExercises').textContent = totalExercises;
             document.getElementById('successRate').textContent = Math.round(successRate) + '%';
             document.getElementById('streak').textContent = streak;
-            
+           
             console.log('Stats mises à jour:', { totalExercises, successRate, streak });
-            
+           
             updateUserDisplay();
         } else {
             console.warn('user_stats non trouvé dans la réponse, rechargement manuel');
             loadUserStats();
         }
-        
+       
         showToast(data.is_correct ? 'Excellent! ' : 'Continue tes efforts! ', 'success');
-        
+       
     } catch (error) {
         console.error('Erreur détaillée:', error);
         showToast('Erreur lors de la soumission', 'error');
-        
+       
         // Afficher l'erreur dans la correction
         const correctionDiv = document.getElementById('correctionResult');
         correctionDiv.innerHTML = `
@@ -1101,11 +1101,11 @@ async function submitExercise() {
 
 function displayExerciseResults(result) {
     const correctionDiv = document.getElementById('correctionResult');
-    
+   
     const detailed = result.detailed_scores || { syntax: 0, logic: 0, best_practices: 0, efficiency: 0 };
     const report = result.report || {};
     const score = result.score || 0;
-    
+   
     // ✨ Couleurs selon le score
     let gradientColors = '';
     if (score >= 90) {
@@ -1117,7 +1117,7 @@ function displayExerciseResults(result) {
     } else {
         gradientColors = 'linear-gradient(135deg, #9d4edd 0%, #ff3366 100%)';
     }
-    
+   
     correctionDiv.innerHTML = `
         <div class="exercise-results">
             <!-- En-tête avec score -->
@@ -1140,11 +1140,11 @@ function displayExerciseResults(result) {
                     Niveau: ${result.mastery_level || 'N/A'}
                 </div>
             </div>
-            
+           
             <!-- Scores détaillés -->
             <div class="detailed-scores" style="margin-bottom: 1.5rem;">
                 <h3 style="margin-bottom: 1rem; color: var(--text-primary);"> Scores Détaillés</h3>
-                
+               
                 <div class="score-bar" style="margin-bottom: 0.8rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
                         <span>Syntaxe</span>
@@ -1154,7 +1154,7 @@ function displayExerciseResults(result) {
                         <div style="background: var(--electric-blue); height: 100%; width: ${(detailed.syntax || 0) * 4}%; transition: width 0.5s;"></div>
                     </div>
                 </div>
-                
+               
                 <div class="score-bar" style="margin-bottom: 0.8rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
                         <span>Logique</span>
@@ -1164,7 +1164,7 @@ function displayExerciseResults(result) {
                         <div style="background: var(--accent-cyan); height: 100%; width: ${(detailed.logic || 0) * 4}%; transition: width 0.5s;"></div>
                     </div>
                 </div>
-                
+               
                 <div class="score-bar" style="margin-bottom: 0.8rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
                         <span>Bonnes Pratiques</span>
@@ -1174,7 +1174,7 @@ function displayExerciseResults(result) {
                         <div style="background: var(--success-green); height: 100%; width: ${(detailed.best_practices || 0) * 4}%; transition: width 0.5s;"></div>
                     </div>
                 </div>
-                
+               
                 <div class="score-bar">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
                         <span>Efficacité</span>
@@ -1185,7 +1185,7 @@ function displayExerciseResults(result) {
                     </div>
                 </div>
             </div>
-            
+           
             <!-- Points forts -->
             ${report.strengths && report.strengths.length > 0 ? `
             <div class="report-section" style="
@@ -1201,7 +1201,7 @@ function displayExerciseResults(result) {
                 </ul>
             </div>
             ` : ''}
-            
+           
             <!-- Points à améliorer -->
             ${report.weaknesses && report.weaknesses.length > 0 ? `
             <div class="report-section" style="
@@ -1217,7 +1217,7 @@ function displayExerciseResults(result) {
                 </ul>
             </div>
             ` : ''}
-            
+           
             <!-- Suggestions -->
             ${report.suggestions && report.suggestions.length > 0 ? `
             <div class="report-section" style="
@@ -1233,7 +1233,7 @@ function displayExerciseResults(result) {
                 </ul>
             </div>
             ` : ''}
-            
+           
             <!-- Correction proposée -->
             ${report.model_correction ? `
             <div class="report-section" style="
@@ -1272,7 +1272,7 @@ function displayExerciseResults(result) {
                 <p style="line-height: 1.6; margin: 0;">${formatMessage(report.detailed_feedback)}</p>
             </div>
             ` : ''}
-            
+           
             <!-- Stats -->
             <div style="
                 padding: 1rem;
@@ -1283,13 +1283,13 @@ function displayExerciseResults(result) {
                 color: var(--text-muted);
             ">
                 <p style="margin: 0;">
-                    Tentative n°${result.attempt_number || 1} • 
+                    Tentative n°${result.attempt_number || 1} •
                     Taux de réussite global: ${result.user_stats?.success_rate?.toFixed(1) || 0}%
                 </p>
             </div>
         </div>
     `;
-    
+   
     // ✨ Scroll automatique vers les résultats
     setTimeout(() => {
         correctionDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1313,24 +1313,24 @@ async function showExerciseHistory() {
     try {
         // Fermer le panneau stats mobile si ouvert
         closeMobileStats();
-        
+       
         const response = await fetch(`${API_URL}/users/${currentUser.id}/exercises`);
         if (!response.ok) throw new Error('Erreur chargement exercices');
-        
+       
         const data = await response.json();
-        
+       
         // Créer le modal d'historique
         const modal = document.createElement('div');
         modal.className = 'modal show';
         modal.id = 'historyModal';
-        
+       
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 1000px; max-height: 90vh;">
                 <div class="modal-header">
                     <h2 class="modal-title"> Mes Exercices Résolus</h2>
                     <button class="close-modal" onclick="closeHistoryModal()">✕</button>
                 </div>
-                
+               
                 <div style="padding: 2rem; overflow-y: auto; max-height: calc(90vh - 120px);">
                     ${data.exercises.length === 0 ? `
                         <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
@@ -1363,7 +1363,7 @@ async function showExerciseHistory() {
                                 </div>
                             </div>
                         </div>
-                        
+                       
                         <div class="exercises-grid">
                             ${data.exercises.map(exercise => `
                                 <div class="exercise-card" style="
@@ -1408,7 +1408,7 @@ async function showExerciseHistory() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+                                   
                                     <div style="
                                         display: inline-block;
                                         padding: 0.3rem 0.8rem;
@@ -1418,10 +1418,10 @@ async function showExerciseHistory() {
                                         font-size: 0.8rem;
                                         color: var(--electric-blue);
                                     ">
-                                        ${exercise.level === 'beginner' ? ' Débutant' : 
+                                        ${exercise.level === 'beginner' ? ' Débutant' :
                                           exercise.level === 'intermediate' ? ' Intermédiaire' : ' Expert'}
                                     </div>
-                                    
+                                   
                                     <div style="
                                         margin-top: 1rem;
                                         padding-top: 1rem;
@@ -1438,9 +1438,9 @@ async function showExerciseHistory() {
                 </div>
             </div>
         `;
-        
+       
         document.body.appendChild(modal);
-        
+       
         // Ajouter l'effet hover
         const cards = modal.querySelectorAll('.exercise-card');
         cards.forEach(card => {
@@ -1455,7 +1455,7 @@ async function showExerciseHistory() {
                 card.style.transform = 'translateY(0)';
             });
         });
-        
+       
     } catch (error) {
         console.error('Erreur:', error);
         showToast('Erreur chargement historique', 'error');
@@ -1466,29 +1466,29 @@ async function viewExerciseDetail(exerciseId) {
     try {
         const response = await fetch(`${API_URL}/exercises/${exerciseId}`);
         if (!response.ok) throw new Error('Erreur chargement exercice');
-        
+       
         const exercise = await response.json();
-        
+       
         // Fermer le modal d'historique
         closeHistoryModal();
-        
+       
         // Créer le modal de détail
         const modal = document.createElement('div');
         modal.className = 'modal show';
         modal.id = 'detailModal';
-        
+       
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 1200px; max-height: 95vh;">
                 <div class="modal-header">
                     <h2 class="modal-title"> Révision - ${exercise.topic}</h2>
                     <button class="close-modal" onclick="closeDetailModal()">✕</button>
                 </div>
-                
+               
                 <div style="padding: 2rem; overflow-y: auto; max-height: calc(95vh - 120px);">
                     <!-- Score -->
                     ${exercise.score !== undefined ? `
                         <div style="
-                            background: linear-gradient(135deg, 
+                            background: linear-gradient(135deg,
                                 ${exercise.score >= 90 ? '#00ff88 0%, #00d4ff 100%' :
                                   exercise.score >= 70 ? '#0066ff 0%, #00d4ff 100%' :
                                   exercise.score >= 50 ? '#00d4ff 0%, #00fff9 100%' :
@@ -1505,7 +1505,7 @@ async function viewExerciseDetail(exerciseId) {
                             </div>
                         </div>
                     ` : ''}
-                    
+                   
                     <!-- Énoncé -->
                     <div style="
                         background: var(--bg-secondary);
@@ -1517,7 +1517,7 @@ async function viewExerciseDetail(exerciseId) {
                         <h3 style="color: var(--electric-blue); margin-bottom: 1rem;">  Énoncé</h3>
                         <div style="line-height: 1.6;">${formatMessage(exercise.exercise_text)}</div>
                     </div>
-                    
+                   
                     <!-- Votre code -->
                     ${exercise.student_code ? `
                         <div style="
@@ -1536,7 +1536,7 @@ async function viewExerciseDetail(exerciseId) {
                             "><code>${exercise.student_code}</code></pre>
                         </div>
                     ` : ''}
-                    
+                   
                     <!-- Correction -->
                     ${exercise.correction ? `
                         <div style="
@@ -1550,7 +1550,7 @@ async function viewExerciseDetail(exerciseId) {
                             <div style="line-height: 1.6; white-space: pre-wrap;">${exercise.correction}</div>
                         </div>
                     ` : ''}
-                    
+                   
                     <!-- Rapport détaillé -->
                     ${exercise.report ? `
                         <div style="
@@ -1560,7 +1560,7 @@ async function viewExerciseDetail(exerciseId) {
                             border-left: 4px solid var(--accent-purple);
                         ">
                             <h3 style="color: var(--accent-purple); margin-bottom: 1rem;">  Rapport Détaillé</h3>
-                            
+                           
                             ${exercise.report.strengths && exercise.report.strengths.length > 0 ? `
                                 <div style="margin-bottom: 1rem;">
                                     <h4 style="color: var(--success-green);"> Points Forts</h4>
@@ -1569,7 +1569,7 @@ async function viewExerciseDetail(exerciseId) {
                                     </ul>
                                 </div>
                             ` : ''}
-                            
+                           
                             ${exercise.report.weaknesses && exercise.report.weaknesses.length > 0 ? `
                                 <div style="margin-bottom: 1rem;">
                                     <h4 style="color: var(--error-red);">  Points à Améliorer</h4>
@@ -1578,7 +1578,7 @@ async function viewExerciseDetail(exerciseId) {
                                     </ul>
                                 </div>
                             ` : ''}
-                            
+                           
                             ${exercise.report.suggestions && exercise.report.suggestions.length > 0 ? `
                                 <div>
                                     <h4 style="color: var(--electric-blue);">  Suggestions</h4>
@@ -1590,7 +1590,7 @@ async function viewExerciseDetail(exerciseId) {
                         </div>
                     ` : ''}
                 </div>
-                
+               
                 <div style="
                     display: flex;
                     gap: 1rem;
@@ -1606,9 +1606,9 @@ async function viewExerciseDetail(exerciseId) {
                 </div>
             </div>
         `;
-        
+       
         document.body.appendChild(modal);
-        
+       
     } catch (error) {
         console.error('Erreur:', error);
         showToast('Erreur chargement détail', 'error');
@@ -1632,10 +1632,10 @@ function closeDetailModal() {
 function showChangeLevelModal() {
     // Fermer les menus mobiles
     closeMobileStats();
-    
+   
     const modal = document.getElementById('changeLevelModal');
     modal.classList.add('show');
-    
+   
     document.querySelectorAll('.level-option').forEach(btn => {
         btn.onclick = async () => {
             const newLevel = btn.getAttribute('data-level');
@@ -1657,9 +1657,9 @@ async function changeLevel(newLevel) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ level: newLevel })
         });
-        
+       
         if (!response.ok) throw new Error('Erreur changement niveau');
-        
+       
         currentUser = await response.json();
         updateUserDisplay();
         showToast(`Niveau changé en ${translateLevel(newLevel)}! `, 'success');
@@ -1677,11 +1677,11 @@ function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
     const toastIcon = document.getElementById('toastIcon');
-    
+   
     toastMessage.textContent = message;
     toast.className = `toast show ${type}`;
     toastIcon.textContent = type === 'success' ? '✅' : '❌';
-    
+   
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
@@ -1701,19 +1701,19 @@ function logout() {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
         // ✅ NOUVEAU: Marquer que l'utilisateur s'est déconnecté volontairement
         sessionStorage.setItem('wasLoggedOut', 'true');
-        
+       
         // Supprimer TOUTES les données de session
         localStorage.clear();
         // NE PAS effacer sessionStorage car on a besoin de wasLoggedOut
-        
+       
         // ✅ NOUVEAU: Afficher un message puis rediriger
         showToast('Déconnexion en cours...', 'success');
-        
+       
         // Rediriger vers login.html après un court délai
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 800);
-        
+       
         return false;
     }
 }
@@ -1723,8 +1723,8 @@ function logout() {
 // ==========================================
 
 /*
-   IMPORTANT: 
-   - La variable sessionStorage.setItem('wasLoggedOut', 'true') 
+   IMPORTANT:
+   - La variable sessionStorage.setItem('wasLoggedOut', 'true')
      permet à la page login.html de détecter qu'il y a eu une déconnexion
    - Le localStorage.clear() supprime les données de l'utilisateur
    - sessionStorage ne contient que 'wasLoggedOut' qui servira de flag
@@ -1742,7 +1742,7 @@ function showLoginModal() {
     // Réactiver l'interface
     document.body.classList.remove('logout-state');
     document.getElementById('logoutOverlay').classList.add('hidden');
-    
+   
     // Afficher le modal de création d'utilisateur (comme au début)
     document.getElementById('userModal').classList.add('show');
 }
