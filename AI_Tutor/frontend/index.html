@@ -2,19 +2,20 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AI Tutor - Votre Assistant d'Apprentissage Intelligent</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 </head>
 <body>
-  
-    
-    
     <div class="grid-overlay"></div>
-    
+
     <!-- Logout Overlay -->
     <div id="logoutOverlay" class="logout-overlay hidden">
         <div class="login-card">
@@ -24,7 +25,7 @@
                 Vous avez été déconnecté. Pour continuer, veuillez vous reconnecter.
             </p>
             <button class="login-btn" onclick="window.location.href='login.html'">
-                🔑 Se connecter à nouveau
+                 Se connecter à nouveau
             </button>
             <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
                 Ou <a href="javascript:location.reload()" style="color: var(--electric-blue);">recharger la page</a> pour réessayer
@@ -42,7 +43,7 @@
     <div id="userModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h2 class="modal-title">🎓 Bienvenue sur AI Tutor</h2>
+                <h2 class="modal-title">Bienvenue sur AI Tutor</h2>
             </div>
             <div style="padding: 2rem;">
                 <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Créez votre compte pour commencer</p>
@@ -64,7 +65,7 @@
     <div id="newSessionModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h2 class="modal-title">📝 Nouvelle Session</h2>
+                <h2 class="modal-title">Nouvelle Session</h2>
                 <button class="close-modal" onclick="document.getElementById('newSessionModal').classList.remove('show')">✕</button>
             </div>
             <div style="padding: 2rem;">
@@ -84,7 +85,7 @@
     <div id="changeLevelModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h2 class="modal-title">🎯 Changer votre niveau</h2>
+                <h2 class="modal-title">Changer votre niveau</h2>
                 <button class="close-modal" onclick="document.getElementById('changeLevelModal').classList.remove('show')">✕</button>
             </div>
             <div style="padding: 2rem;">
@@ -93,19 +94,19 @@
                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                     <button class="level-option" data-level="beginner" 
                             style="padding: 1.5rem; text-align: left; border: 2px solid var(--electric-blue); border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.3s;">
-                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">🌱 Débutant</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">  Débutant</div>
                         <div style="font-size: 0.9rem; color: var(--text-muted);">Je commence tout juste à apprendre</div>
                     </button>
                     
                     <button class="level-option" data-level="intermediate" 
                             style="padding: 1.5rem; text-align: left; border: 2px solid var(--electric-blue); border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.3s;">
-                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">📈 Intermédiaire</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">  Intermédiaire</div>
                         <div style="font-size: 0.9rem; color: var(--text-muted);">J'ai des connaissances solides</div>
                     </button>
                     
                     <button class="level-option" data-level="expert" 
                             style="padding: 1.5rem; text-align: left; border: 2px solid var(--electric-blue); border-radius: 8px; background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.3s;">
-                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">⭐ Expert</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">  Expert</div>
                         <div style="font-size: 0.9rem; color: var(--text-muted);">Je maîtrise Python en profondeur</div>
                     </button>
                 </div>
@@ -120,13 +121,13 @@
         </div>
     </div>
 
-    <!-- Exercise Modal - MODIFIÉ POUR MEILLEUR LAYOUT -->
-   <div id="exerciseModal" class="modal">
+    <!-- Exercise Modal - AVEC SCROLL OPTIMISÉ -->
+    <div id="exerciseModal" class="modal">
         <div class="modal-content">
             
             <!-- Header FIXE -->
             <div class="modal-header">
-                <h2 class="modal-title">💪 Exercice de Pratique</h2>
+                <h2 class="modal-title">Exercice de Pratique</h2>
                 <button class="close-modal" onclick="closeExerciseModal()">✕</button>
             </div>
             
@@ -140,10 +141,10 @@
             <!-- Boutons FIXES -->
             <div class="modal-buttons">
                 <button class="btn btn-primary" onclick="submitExercise()">
-                    ✅ Soumettre la solution
+                      Soumettre la solution
                 </button>
                 <button class="btn btn-secondary" onclick="closeExerciseModal()">
-                    ✕ Fermer
+                      Fermer
                 </button>
             </div>
             
@@ -153,11 +154,15 @@
     <header>
         <div class="container">
             <div class="header-content">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span class="hamburger-icon">☰</span>
+                </button>
+                
                 <div class="logo" onclick="location.reload()">
-                    <div class="logo-icon">🤖</div>
+                    <div class="logo-icon" id="lottie-logo"></div>
                     <div class="logo-text">
                         <div class="logo-name">AI TUTOR</div>
-                        <div class="logo-tagline">LEARN PYTHON</div>
+                        <div class="logo-tagline">LEARN PROGRAMMING</div>
                     </div>
                 </div>
                 <div class="header-user">
@@ -165,20 +170,23 @@
                         <div class="user-name" id="userName">Utilisateur</div>
                         <div class="user-level" id="userLevel">Niveau: Débutant</div>
                     </div>
-                    <button class="btn btn-secondary" onclick="logout()" style="padding: 0.5rem 1rem;">
-                        Déconnexion
+                    <button class="btn btn-secondary logout-btn" onclick="logout()">
+                        <span class="logout-icon">⏻</span>
+                        <span class="logout-text">Déconnexion</span>
                     </button>
                 </div>
             </div>
         </div>
     </header>
-    
 
     <div class="container">
         <div class="main-layout">
             <!-- Sessions Sidebar -->
-            <aside class="sidebar">
-                <div class="sidebar-title">📚 MES SESSIONS</div>
+            <aside class="sidebar" id="mobileSidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">MES SESSIONS</div>
+                    <button class="close-sidebar-btn" onclick="toggleMobileMenu()">✕</button>
+                </div>
                 <button class="btn btn-primary" id="newSessionBtn" style="width: 100%; margin-bottom: 1rem;">
                     + Nouvelle Session
                 </button>
@@ -192,10 +200,38 @@
                     <div class="level-badge" id="levelBadge">DÉBUTANT</div>
                 </div>
                 
+                <!-- Barre d'actions mobile -->
+                <div class="mobile-actions-bar" id="mobileActionsBar">
+                    <button class="mobile-action-btn" id="mobileChangeLevelBtn" title="Changer de niveau">
+                          Niveau
+                    </button>
+                    <button class="mobile-action-btn" id="mobileExerciseBtn" title="Exercice">
+                          Exercice
+                    </button>
+                    <button class="mobile-action-btn" onclick="showExerciseHistory()" title="Réviser mes exercices">
+                          Réviser
+                    </button>
+                </div>
+                
                 <div class="messages-container" id="messagesContainer">
                     <div class="welcome-message">
-                        <div class="welcome-title">🎓 Bienvenue sur AI Tutor</div>
-                        <div class="welcome-subtitle">Créez une nouvelle session pour commencer</div>
+                        <div class="welcome-avatar" id="welcome-avatar"></div>
+                        <div class="welcome-title">👋 Bonjour ! Je suis AI Tutor</div>
+                        <div class="welcome-subtitle">
+                            Comprendre, pratiquer et progresser!
+                        </div>
+                        <div class="ai-presentation">
+                            <p>🤖 <strong>Je suis là pour vous aider à maîtriser vos langages de programmation principalement Python !</strong></p>
+                            <ul>
+                                <li>  Posez-moi vos questions en Python </li>
+                                <li>  Entraînez-vous avec des exercices adaptés à votre niveau</li>
+                                <li>  Suivez votre progression en temps réel</li>
+                                <li>  Je suis disposé à vous aider sur d'autres langages de programmation</li>
+                            </ul>
+                            <p style="margin-top: 1rem;">
+                                <strong>Pour commencer :</strong> Créez une nouvelle session ou posez-moi directement une question !
+                            </p>
+                        </div>
                     </div>
                 </div>
                 
@@ -204,46 +240,76 @@
                         <textarea class="input-field" id="messageInput" 
                                   placeholder="Posez votre question..."></textarea>
                         <div class="input-actions">
-                            <button class="send-btn" id="sendBtn">📤</button>
+                            <button class="send-btn" id="sendBtn">
+                                <img src="images/send-icon.png" alt="Envoyer" class="send-icon-img">
+                            </button>
                         </div>
                     </div>
                 </div>
             </main>
 
             <!-- Stats Panel -->
-            <aside class="stats-panel">
-                <div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalExercises">0</div>
-                        <div class="stat-label">Exercices résolus</div>
+            <aside class="stats-panel" id="mobileStatsPanel">
+               
+                <div class="stats-content" id="statsContent">
+                    <div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalExercises">0</div>
+                            <div class="stat-label">Exercices résolus</div>
+                        </div>
+                        
+                        <div class="stat-item" style="margin-top: 2rem;">
+                            <div class="stat-value" id="successRate">0%</div>
+                            <div class="stat-label">Taux de réussite global </div>
+                        </div>
+                        
+                        <div class="stat-item" style="margin-top: 2rem;">
+                            <div class="stat-value" id="streak">0</div>
+                            <div class="stat-label">Série actuelle</div>
+                        </div>
                     </div>
                     
-                    <div class="stat-item" style="margin-top: 2rem;">
-                        <div class="stat-value" id="successRate">0%</div>
-                        <div class="stat-label">Taux de réussite</div>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <button class="btn btn-primary" id="exerciseBtn" style="width: 100%;">
+                                Exercice
+                        </button>
+                        <button class="btn btn-primary" onclick="showExerciseHistory()" style="width: 100%;">
+                                Réviser mes exercices
+                        </button>
+                        <button class="btn btn-secondary" id="changeLevelBtn" style="width: 100%;">
+                                Changer niveau
+                        </button>
                     </div>
-                    
-                    <div class="stat-item" style="margin-top: 2rem;">
-                        <div class="stat-value" id="streak">0</div>
-                        <div class="stat-label">Série actuelle</div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <button class="btn btn-primary" id="exerciseBtn" style="width: 100%;">
-                        💪 Exercice
-                    </button>
-                    <button class="btn btn-primary" onclick="showExerciseHistory()" style="width: 100%;">
-                        📚 Réviser mes exercices
-                    </button>
-                    <button class="btn btn-secondary" id="changeLevelBtn" style="width: 100%;">
-                        🎯 Changer niveau
-                    </button>
                 </div>
             </aside>
         </div>
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Load Lottie animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logo animation
+            const logoAnimation = bodymovin.loadAnimation({
+                container: document.getElementById('lottie-logo'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'Live chatbot.json'
+            });
+            
+            // Welcome avatar animation
+            const welcomeAvatar = document.getElementById('welcome-avatar');
+            if (welcomeAvatar) {
+                const welcomeAnimation = bodymovin.loadAnimation({
+                    container: welcomeAvatar,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'Live chatbot.json'
+                });
+            }
+        });
+    </script>
 </body>
 </html>
