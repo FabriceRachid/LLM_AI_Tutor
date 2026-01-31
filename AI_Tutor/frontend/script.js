@@ -1687,22 +1687,48 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// ==========================================
+// MODIFICATION POUR SCRIPT.JS
+// ==========================================
+
+/*
+   REMPLACEZ la fonction logout() par celle-ci :
+   Localisez : function logout() {
+   Et remplacez jusqu'au prochain }
+*/
+
 function logout() {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-        // Sauvegarder les horodatages
-        localStorage.setItem('messageTimestamps', JSON.stringify(messageTimestamps));
+        // ✅ NOUVEAU: Marquer que l'utilisateur s'est déconnecté volontairement
+        sessionStorage.setItem('wasLoggedOut', 'true');
         
         // Supprimer TOUTES les données de session
         localStorage.clear();
-        sessionStorage.clear();
+        // NE PAS effacer sessionStorage car on a besoin de wasLoggedOut
         
-        // Rediriger IMMÉDIATEMENT vers la page de connexion
-        window.location.href = 'login.html';
+        // ✅ NOUVEAU: Afficher un message puis rediriger
+        showToast('Déconnexion en cours...', 'success');
         
-        // Empêcher toute exécution supplémentaire
+        // Rediriger vers login.html après un court délai
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 800);
+        
         return false;
     }
 }
+
+// ==========================================
+// FIN DE LA MODIFICATION
+// ==========================================
+
+/*
+   IMPORTANT: 
+   - La variable sessionStorage.setItem('wasLoggedOut', 'true') 
+     permet à la page login.html de détecter qu'il y a eu une déconnexion
+   - Le localStorage.clear() supprime les données de l'utilisateur
+   - sessionStorage ne contient que 'wasLoggedOut' qui servira de flag
+*/
 
 // Charger les horodatages au démarrage
 function loadMessageTimestamps() {

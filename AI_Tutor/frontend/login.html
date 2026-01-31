@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Styles spécifiques pour la page de login */
         body {
             display: flex;
             align-items: center;
@@ -71,6 +70,12 @@
             font-size: 0.95rem;
         }
         
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
         .input-group input {
             width: 100%;
             padding: 0.9rem 1.2rem;
@@ -81,6 +86,11 @@
             font-size: 0.95rem;
             font-family: 'Poppins', sans-serif;
             transition: all 0.3s;
+            box-sizing: border-box;
+        }
+        
+        .password-input-wrapper input {
+            padding-right: 2.8rem;
         }
         
         .input-group input:focus {
@@ -92,6 +102,28 @@
         
         .input-group input::placeholder {
             color: var(--text-muted);
+        }
+        
+        .password-toggle-btn {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            transition: all 0.3s;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .password-toggle-btn:hover {
+            color: var(--electric-blue);
+            transform: scale(1.1);
         }
         
         .submit-btn {
@@ -165,10 +197,7 @@
             text-decoration: underline;
         }
         
-        .error-message {
-            background: rgba(255, 51, 102, 0.1);
-            border: 1px solid var(--error-red);
-            color: var(--error-red);
+        .message-box {
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
@@ -176,26 +205,43 @@
             animation: slideDown 0.3s ease-out;
         }
         
-        .error-message.show {
+        .message-box.show {
             display: block;
+        }
+        
+        .info-message {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--electric-blue);
+            color: var(--electric-blue);
+        }
+        
+        .error-message {
+            background: rgba(255, 51, 102, 0.1);
+            border: 1px solid var(--error-red);
+            color: var(--error-red);
         }
         
         .success-message {
             background: rgba(0, 255, 136, 0.1);
             border: 1px solid var(--success-green);
             color: var(--success-green);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            display: none;
-            animation: slideDown 0.3s ease-out;
         }
         
-        .success-message.show {
-            display: block;
+        .message-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
         
-        /* Loading spinner */
+        .message-detail {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .message-detail + .message-detail {
+            margin-top: 0.4rem;
+        }
+        
         .loading-spinner {
             display: none;
             width: 20px;
@@ -219,7 +265,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Responsive */
         @media (max-width: 768px) {
             .login-container {
                 max-width: 100%;
@@ -257,6 +302,7 @@
             
             .input-group input {
                 padding: 0.75rem 1rem;
+                padding-right: 2.8rem;
                 font-size: 0.9rem;
             }
             
@@ -272,14 +318,15 @@
     
     <div class="login-container">
         <div class="login-header">
-            
+            <div class="login-logo">🤖</div>
             <h1 class="login-title">AI TUTOR</h1>
             <p class="login-subtitle">Connectez-vous pour commencer à apprendre</p>
         </div>
         
         <div class="form-container">
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
+            <div id="infoMessage" class="message-box info-message"></div>
+            <div id="errorMessage" class="message-box error-message"></div>
+            <div id="successMessage" class="message-box success-message"></div>
             
             <form id="loginForm">
                 <div class="input-group">
@@ -296,14 +343,19 @@
                 
                 <div class="input-group">
                     <label for="password">Mot de passe</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Entrez votre mot de passe"
-                        required
-                        autocomplete="current-password"
-                    >
+                    <div class="password-input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Entrez votre mot de passe"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="password-toggle-btn" id="passwordToggle" title="Afficher/Masquer">
+                            👁️
+                        </button>
+                    </div>
                 </div>
                 
                 <button type="submit" class="submit-btn" id="submitBtn">
@@ -320,23 +372,75 @@
 
     <script>
         const errorMessage = document.getElementById('errorMessage');
+        const infoMessage = document.getElementById('infoMessage');
         const successMessage = document.getElementById('successMessage');
         const submitBtn = document.getElementById('submitBtn');
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.getElementById('passwordToggle');
         
-        function showError(message) {
-            errorMessage.textContent = message;
+        // ✅ Toggle affichage/masquage du mot de passe
+        passwordToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordToggle.textContent = '👁️‍🗨️';
+                passwordToggle.title = 'Masquer le mot de passe';
+            } else {
+                passwordInput.type = 'password';
+                passwordToggle.textContent = '👁️';
+                passwordToggle.title = 'Afficher le mot de passe';
+            }
+        });
+        
+        function showInfo(title, details = []) {
+            infoMessage.innerHTML = `
+                <div class="message-title">ℹ️ ${title}</div>
+                ${details.map(detail => `<div class="message-detail">• ${detail}</div>`).join('')}
+            `;
+            infoMessage.classList.add('show');
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+            
+            setTimeout(() => {
+                infoMessage.classList.remove('show');
+            }, 8000);
+        }
+        
+        function showError(title, details = []) {
+            errorMessage.innerHTML = `
+                <div class="message-title">❌ ${title}</div>
+                ${details.map(detail => `<div class="message-detail">• ${detail}</div>`).join('')}
+            `;
             errorMessage.classList.add('show');
+            infoMessage.classList.remove('show');
             successMessage.classList.remove('show');
             
             setTimeout(() => {
                 errorMessage.classList.remove('show');
-            }, 5000);
+            }, 6000);
         }
         
         function showSuccess(message) {
-            successMessage.textContent = message;
+            successMessage.innerHTML = `<div class="message-title">${message}</div>`;
             successMessage.classList.add('show');
             errorMessage.classList.remove('show');
+            infoMessage.classList.remove('show');
+        }
+        
+        function checkLogoutStatus() {
+            const wasLoggedOut = sessionStorage.getItem('wasLoggedOut');
+            
+            if (wasLoggedOut) {
+                showInfo(
+                    'Vous avez été déconnecté',
+                    [
+                        'Vous avez été déconnecté avec succès',
+                        'Veuillez vous reconnecter pour accéder à votre compte'
+                    ]
+                );
+                sessionStorage.removeItem('wasLoggedOut');
+            }
         }
         
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -346,11 +450,13 @@
             const password = document.getElementById('password').value;
             
             if (!username || !password) {
-                showError('Veuillez remplir tous les champs');
+                showError('Champs manquants', [
+                    !username ? 'Veuillez entrer votre nom d\'utilisateur' : '',
+                    !password ? 'Veuillez entrer votre mot de passe' : ''
+                ].filter(Boolean));
                 return;
             }
             
-            // Désactiver le bouton et afficher le spinner
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
             
@@ -369,38 +475,86 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Stocker le token de session
                     localStorage.setItem('sessionId', data.session_id);
                     localStorage.setItem('userId', data.user_id);
                     localStorage.setItem('username', data.username);
                     
-                    showSuccess('✅ Connexion réussie ! Redirection...');
+                    sessionStorage.removeItem('wasLoggedOut');
+                    sessionStorage.removeItem('comeFromAnonymous');
                     
-                    // Rediriger vers le dashboard après 1 seconde
+                    showSuccess('✅ Connexion réussie ! Redirection en cours...');
+                    
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 1000);
                 } else {
-                    showError(data.error || 'Identifiants incorrects');
+                    if (response.status === 401) {
+                        showError('Identifiants incorrects', [
+                            'Le nom d\'utilisateur ou le mot de passe est incorrect',
+                            'Vérifiez que les majuscules/minuscules sont correctes'
+                        ]);
+                    } else if (response.status === 404) {
+                        showError('Utilisateur non trouvé', [
+                            `L'utilisateur "${username}" n'existe pas`,
+                            'Vérifiez le nom d\'utilisateur',
+                            'N\'avez-vous pas encore de compte ? Cliquez sur "S\'inscrire"'
+                        ]);
+                    } else if (response.status === 400) {
+                        showError('Erreur de validation', [
+                            data.error || 'Les données sont invalides',
+                            'Vérifiez votre saisie et réessayez'
+                        ]);
+                    } else if (response.status === 500) {
+                        showError('Erreur serveur', [
+                            'Une erreur s\'est produite sur le serveur',
+                            'Veuillez réessayer dans quelques instants'
+                        ]);
+                    } else {
+                        showError('Erreur de connexion', [
+                            data.error || 'Une erreur est survenue',
+                            'Vérifiez votre connexion internet et réessayez'
+                        ]);
+                    }
+                    
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('loading');
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                showError('❌ Erreur de connexion au serveur. Vérifiez que le serveur est démarré.');
+                showError('Erreur de connexion au serveur', [
+                    'Impossible de se connecter au serveur',
+                    'Assurez-vous que le serveur est démarré',
+                    'Vérifiez votre connexion internet'
+                ]);
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('loading');
             }
         });
         
-        // Vérifier si déjà connecté
         window.addEventListener('DOMContentLoaded', () => {
             const userId = localStorage.getItem('userId');
-            if (userId) {
-                showSuccess('✅ Déjà connecté ! Redirection...');
+            const sessionId = localStorage.getItem('sessionId');
+            
+            if (userId && sessionId) {
+                showSuccess('✅ Vous êtes déjà connecté ! Redirection...');
                 setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 1000);
+            } else {
+                // ✅ Vérifier si l'utilisateur vient du mode anonyme
+                const comeFromAnonymous = sessionStorage.getItem('comeFromAnonymous');
+                if (comeFromAnonymous) {
+                    showInfo(
+                        'Vous avez utilisé votre essai gratuit',
+                        [
+                            'Créez un compte maintenant pour continuer votre apprentissage',
+                            'Accédez aux conversations illimitées et aux exercices interactifs'
+                        ]
+                    );
+                    sessionStorage.removeItem('comeFromAnonymous');
+                } else {
+                    checkLogoutStatus();
+                }
             }
         });
     </script>
